@@ -36,7 +36,7 @@ window.addEventListener('load', async () => {
       li.textContent = item.title;
 
       const button = document.createElement('button');
-      button.textContent = 'x';
+      button.textContent = '❌';
       button.addEventListener('click', async () => {
         if (!confirm(`Delete ${item.title}?`)) {
           return;
