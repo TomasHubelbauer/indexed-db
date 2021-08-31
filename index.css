@@ -1,0 +1,11 @@
+body {
+  font: icon;
+}
+
+input {
+  width: 50%;
+}
+
+li > button {
+  margin: 0 0 0 1ex;
+}
