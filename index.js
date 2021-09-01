@@ -68,7 +68,7 @@ window.addEventListener('load', async () => {
   }
 });
 
-async function openDatabase() {
+function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = window.indexedDB.open('indexed-db');
     request.addEventListener('success', () => resolve(request.result));
@@ -81,7 +81,7 @@ async function openDatabase() {
   });
 }
 
-async function listItems(/** @type {IDBDatabase} */ database, /** @type {string} */ store) {
+function listItems(/** @type {IDBDatabase} */ database, /** @type {string} */ store) {
   return new Promise((resolve, reject) => {
     const request = database.transaction([store]).objectStore(store).getAll();
     request.addEventListener('success', () => resolve(request.result));
@@ -89,7 +89,7 @@ async function listItems(/** @type {IDBDatabase} */ database, /** @type {string}
   });
 }
 
-async function recordItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
+function recordItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
   return new Promise((resolve, reject) => {
     const request = database.transaction([store], 'readwrite').objectStore(store).add(item, item.id);
     request.addEventListener('success', resolve);
@@ -97,7 +97,7 @@ async function recordItem(/** @type {IDBDatabase} */ database, /** @type {string
   });
 }
 
-async function removeItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {string | number} */ key) {
+function removeItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {string | number} */ key) {
   return new Promise((resolve, reject) => {
     const request = database.transaction([store], 'readwrite').objectStore(store).delete(key);
     request.addEventListener('success', resolve);
@@ -105,7 +105,7 @@ async function removeItem(/** @type {IDBDatabase} */ database, /** @type {string
   });
 }
 
-async function updateItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
+function updateItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
   return new Promise((resolve, reject) => {
     const request = database.transaction([store], 'readwrite').objectStore(store).put(item);
     request.addEventListener('success', resolve);
