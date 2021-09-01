@@ -1,9 +1,28 @@
 body {
   font: icon;
+  display: flex;
+  flex-direction: column;
+}
+
+body.file::before {
+  background: salmon;
+  color: white;
+  content: 'DEV';
+  display: initial;
+  padding: 4ex 4ex 1ex;
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 input {
+  margin: 0 auto;
   width: 50%;
+}
+
+ul {
+  list-style-type: none;
+  margin: 1em auto;
+  padding: 0;
 }
 
 li > button {

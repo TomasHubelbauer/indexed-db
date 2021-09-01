@@ -1,4 +1,6 @@
 window.addEventListener('load', async () => {
+  document.body.classList.toggle(location.protocol.slice(0, -1));
+
   if (!window.indexedDB) {
     alert('IndexedDB is not supported.');
     return;
