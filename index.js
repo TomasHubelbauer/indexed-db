@@ -30,12 +30,16 @@ window.addEventListener('load', async () => {
 
   async function renderItems(/** @type {IDBDatabase} */ database) {
     const items = await listItems(database, 'items');
-    const ul = document.querySelector('ul');
-    ul.innerHTML = '';
+    const itemsDiv = document.querySelector('#itemsDiv');
+    itemsDiv.innerHTML = '';
 
     for (const item of items) {
-      const li = document.createElement('li');
-      li.textContent = item.title;
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'itemDiv';
+
+      const span = document.createElement('span');
+      span.className = 'titleSpan';
+      span.textContent = item.title;
 
       const button = document.createElement('button');
       button.textContent = '❌';
@@ -48,8 +52,8 @@ window.addEventListener('load', async () => {
         await renderItems(database);
       });
 
-      li.append(button);
-      ul.append(li);
+      itemDiv.append(span, button);
+      itemsDiv.append(itemDiv);
     }
   }
 });

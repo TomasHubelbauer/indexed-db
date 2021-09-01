@@ -2,6 +2,7 @@ body {
   font: icon;
   display: flex;
   flex-direction: column;
+  gap: 1em;
 }
 
 body.file::before {
@@ -19,12 +20,28 @@ input {
   width: 50%;
 }
 
-ul {
-  list-style-type: none;
-  margin: 1em auto;
-  padding: 0;
+#itemsDiv {
+  margin: auto;
 }
 
-li > button {
-  margin: 0 0 0 1ex;
+.itemDiv {
+  align-items: center;
+  display: flex;
+  gap: 1ex;
+  padding: .5ex;
+}
+
+.itemDiv:hover {
+  background: whitesmoke;
+}
+
+.titleSpan {
+  flex: 1;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
