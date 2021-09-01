@@ -43,5 +43,3 @@ might not fit into the available memory rendering this functionality broken in
 possibly the least convenient moment for it to be broken.
 
 ### Implement drag and drop re-ordering items in the list by a `sort` field
-
-### Implement editing items titles by clicking on them with type-style cursor

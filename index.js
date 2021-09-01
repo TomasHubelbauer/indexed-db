@@ -40,6 +40,16 @@ window.addEventListener('load', async () => {
       const span = document.createElement('span');
       span.className = 'titleSpan';
       span.textContent = item.title;
+      span.addEventListener('click', async () => {
+        const title = prompt('Title:', item.title);
+        if (!title) {
+          return;
+        }
+
+        item.title = title;
+        await updateItem(database, 'items', item);
+        await renderItems(database);
+      });
 
       const button = document.createElement('button');
       button.textContent = '❌';
@@ -90,6 +100,14 @@ async function recordItem(/** @type {IDBDatabase} */ database, /** @type {string
 async function removeItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {string | number} */ key) {
   return new Promise((resolve, reject) => {
     const request = database.transaction([store], 'readwrite').objectStore(store).delete(key);
+    request.addEventListener('success', resolve);
+    request.addEventListener('error', () => reject('A transaction error occured.'));
+  });
+}
+
+async function updateItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
+  return new Promise((resolve, reject) => {
+    const request = database.transaction([store], 'readwrite').objectStore(store).put(item);
     request.addEventListener('success', resolve);
     request.addEventListener('error', () => reject('A transaction error occured.'));
   });
