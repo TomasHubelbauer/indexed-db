@@ -30,12 +30,41 @@ window.addEventListener('load', async () => {
 
   async function renderItems(/** @type {IDBDatabase} */ database) {
     const items = await listItems(database, 'items');
+    items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
     const itemsDiv = document.querySelector('#itemsDiv');
     itemsDiv.innerHTML = '';
 
     for (const item of items) {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'itemDiv';
+      itemDiv.draggable = true;
+      itemDiv.dataset.id = item.id;
+      itemDiv.dataset.order = item.order ?? item.id;
+
+      itemDiv.addEventListener('dragstart', event => {
+        // Copy the ID in as text so that dragging it to an input shows its ID
+        event.dataTransfer.setData('text/plain', item.id);
+
+        // Copy the ID in an application-specific way to not get fakes in drop
+        event.dataTransfer.setData('indexed-db', JSON.stringify({ id: item.id, order: item.order ?? item.id }));
+      });
+
+      // Note that this event must be handled even if only to prevent default
+      itemDiv.addEventListener('dragover', event => event.preventDefault());
+
+      itemDiv.addEventListener('drop', async event => {
+        event.preventDefault();
+
+        const order = Number(event.currentTarget.dataset.order);
+        const { id, order: otherOrder } = JSON.parse(event.dataTransfer.getData('indexed-db'));
+
+        const otherItem = await obtainItem(database, 'items', id);
+        item.order = otherOrder;
+        otherItem.order = order;
+        await updateItem(database, 'items', item);
+        await updateItem(database, 'items', otherItem);
+        await renderItems(database);
+      });
 
       const span = document.createElement('span');
       span.className = 'titleSpan';
@@ -101,6 +130,14 @@ function removeItem(/** @type {IDBDatabase} */ database, /** @type {string} */ s
   return new Promise((resolve, reject) => {
     const request = database.transaction([store], 'readwrite').objectStore(store).delete(key);
     request.addEventListener('success', resolve);
+    request.addEventListener('error', () => reject('A transaction error occured.'));
+  });
+}
+
+function obtainItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {string | number} */ key) {
+  return new Promise((resolve, reject) => {
+    const request = database.transaction([store], 'readwrite').objectStore(store).get(key);
+    request.addEventListener('success', () => resolve(request.result));
     request.addEventListener('error', () => reject('A transaction error occured.'));
   });
 }
