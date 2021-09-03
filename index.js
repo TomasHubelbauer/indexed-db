@@ -16,7 +16,17 @@ window.addEventListener('load', async () => {
         return;
       }
 
-      await recordItem(database, 'items', { title: input.value });
+      const id = await recordItem(database, 'items', { title: input.value });
+      const items = await listItems(database, 'items');
+
+      // Place item at the top
+      if (items.length > 0) {
+        items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
+        const item = await obtainItem(database, 'items', id);
+        item.order = (items[0].order ?? items[0].id) - 1;
+        await updateItem(database, 'items', item);
+      }
+
       input.value = '';
       await renderItems(database);
     })
@@ -121,7 +131,7 @@ function listItems(/** @type {IDBDatabase} */ database, /** @type {string} */ st
 function recordItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
   return new Promise((resolve, reject) => {
     const request = database.transaction([store], 'readwrite').objectStore(store).add(item, item.id);
-    request.addEventListener('success', resolve);
+    request.addEventListener('success', () => resolve(request.result));
     request.addEventListener('error', () => reject('A transaction error occured.'));
   });
 }
