@@ -35,6 +35,45 @@ window.addEventListener('load', async () => {
     document.addEventListener('visibilitychange', () => input.focus());
     input.focus();
 
+    let mediaRecorder;
+
+    const recordButton = document.querySelector('#recordButton');
+    recordButton.addEventListener('click', async () => {
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+        return;
+      }
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+
+      /** @type {Blob[]} */
+      const chunks = [];
+
+      mediaRecorder.addEventListener('dataavailable', event => chunks.push(event.data));
+
+      mediaRecorder.addEventListener('stop', async () => {
+        // Stop all tracks to release user media and hide browser media indicators
+        mediaStream.getTracks().forEach(track => track.stop())
+
+        const blob = new Blob(chunks);
+        const id = await recordItem(database, 'items', { title: 'Transcribe note', blob });
+        const items = await listItems(database, 'items');
+
+        // Place item at the top
+        if (items.length > 0) {
+          items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
+          const item = await obtainItem(database, 'items', id);
+          item.order = (items[0].order ?? items[0].id) - 1;
+          await updateItem(database, 'items', item);
+        }
+
+        await renderItems(database);
+      });
+
+      mediaRecorder.start();
+    });
+
     await renderItems(database);
   }
   catch (error) {
@@ -158,6 +197,27 @@ window.addEventListener('load', async () => {
         await renderItems(database);
       });
 
+      itemDiv.append(span);
+
+      if (item.blob) {
+        const button = document.createElement('button');
+        button.textContent = '🔈';
+        button.addEventListener('click', async event => {
+          // Prevent the rename operation
+          event.preventDefault();
+
+          const audio = document.createElement('audio');
+          audio.src = URL.createObjectURL(item.blob);
+          await audio.play();
+          audio.addEventListener('ended', () => {
+            URL.revokeObjectURL(audio.src);
+            audio.remove();
+          });
+        });
+
+        itemDiv.append(button);
+      }
+
       const button = document.createElement('button');
       button.textContent = '❌';
       button.addEventListener('click', async () => {
@@ -169,7 +229,7 @@ window.addEventListener('load', async () => {
         await renderItems(database);
       });
 
-      itemDiv.append(span, button);
+      itemDiv.append(button);
       itemsDiv.append(itemDiv);
       _item = item;
     }
