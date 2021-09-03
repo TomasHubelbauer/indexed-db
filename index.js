@@ -199,12 +199,14 @@ window.addEventListener('load', async () => {
       }
 
       span.addEventListener('click', async () => {
-        const title = prompt('Title:', item.title);
-        if (!title) {
+        const str = prompt('Title:', item.title);
+        if (!str) {
           return;
         }
 
+        const { title, tags } = extractTags(str, item.tags ?? []);
         item.title = title;
+        item.tags = tags;
         await updateItem(database, 'items', item);
         await renderItems(database);
       });
@@ -249,29 +251,36 @@ window.addEventListener('load', async () => {
     itemsDiv.append(renderDropZone(database, _item));
   }
 
-  async function prependItem(/** @type {IDBDatabase} */ database, /** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
+  function extractTags(/** @type {string} */ title, /** @type {string[]} */ tags = []) {
+    title = title.trim();
     const regex = /((?<tag>[-+][\w-]+)( |$))+$/;
-    const match = regex.exec(item.title);
-    const title = item.title.slice(0, -match[0]?.length).trim();
-    const tags = item.title
-      .slice(match?.index ?? item.title.length)
-      .split(/ /g)
-      .reduce(
-        (tags, tag) => {
-          if (tag[0] === '+') {
-            tags.push(tag.slice('+'.length));
-            return tags;
+    const match = regex.exec(title);
+    if (match) {
+      const modifiers = title.slice(match.index).split(/ /g);
+      title = title.slice(0, -match[0].length).trim();
+      for (const modifier of modifiers) {
+        const tag = modifier.slice('±'.length);
+        switch (modifier[0]) {
+          case '+': {
+            tags.push(tag);
+            break;
           }
-
-          if (tag[0] === '-') {
-            return tags.filter(t => t !== tag.slice('-'.length));
+          case '-': {
+            tags = tags.filter(t => t !== tag);
+            break;
           }
+          default: {
+            throw new Error('Tag modifier must start with + or -.');
+          }
+        }
+      }
+    }
 
-          throw new Error('Tag modifier must start with + or -.');
-        },
-        []
-      );
+    return { title, tags };
+  }
 
+  async function prependItem(/** @type {IDBDatabase} */ database, /** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
+    const { title, tags } = extractTags(item.title);
     item.title = title;
     item.tags = tags;
 
