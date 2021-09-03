@@ -38,13 +38,68 @@ window.addEventListener('load', async () => {
     throw error;
   }
 
+  function renderDropZone(database, /** @type {{ id: number; title: string; }} */ prev, /** @type {{ id: number; title: string; }} */ next) {
+    const div = document.createElement('div');
+    div.className = 'dropDiv';
+    div.title = prev?.title ? next?.title ? `Place between '${prev.title}' and '${next.title}'` : `Place after '${prev.title}'` : `Place before '${next.title}'`;
+
+    div.addEventListener('dragover', event => {
+      event.preventDefault();
+      event.currentTarget.classList.toggle('hover', true);
+    });
+
+    div.addEventListener('dragexit', event => {
+      event.currentTarget.classList.toggle('hover', false);
+    });
+
+    div.addEventListener('drop', async event => {
+      event.preventDefault();
+      event.currentTarget.classList.toggle('hover', false);
+
+      if (prev) {
+        if (next) {
+          const prevOrder = prev.order ?? prev.id;
+          const nextOrder = next.order ?? next.id;
+          const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
+          const item = await obtainItem(database, 'items', id);
+          item.order = (prevOrder + nextOrder) / 2;
+          await updateItem(database, 'items', item);
+        }
+        else {
+          const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
+          const item = await obtainItem(database, 'items', id);
+          item.order = (prev.order ?? prev.id) + 1;
+          await updateItem(database, 'items', item);
+        }
+      }
+      else {
+        if (next) {
+          const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
+          const item = await obtainItem(database, 'items', id);
+          item.order = (next.order ?? next.id) - 1;
+          await updateItem(database, 'items', item);
+        }
+        else {
+          throw new Error('Must have either prev or next!');
+        }
+      }
+
+      await renderItems(database);
+    });
+
+    return div;
+  }
+
   async function renderItems(/** @type {IDBDatabase} */ database) {
     const items = await listItems(database, 'items');
     items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
     const itemsDiv = document.querySelector('#itemsDiv');
     itemsDiv.innerHTML = '';
 
+    let _item;
     for (const item of items) {
+      itemsDiv.append(renderDropZone(database, _item, item));
+
       const itemDiv = document.createElement('div');
       itemDiv.className = 'itemDiv';
       itemDiv.draggable = true;
@@ -57,7 +112,12 @@ window.addEventListener('load', async () => {
 
         // Copy the ID in an application-specific way to not get fakes in drop
         event.dataTransfer.setData('indexed-db', JSON.stringify({ id: item.id, order: item.order ?? item.id }));
+
+        // Mark the list as drag-and-drop occuring to show in-between drop zones
+        itemsDiv.classList.toggle('dnd', true);
       });
+
+      itemDiv.addEventListener('dragend', () => itemsDiv.classList.toggle('dnd', false));
 
       // Note that this event must be handled even if only to prevent default
       itemDiv.addEventListener('dragover', event => event.preventDefault());
@@ -69,6 +129,10 @@ window.addEventListener('load', async () => {
         const { id, order: otherOrder } = JSON.parse(event.dataTransfer.getData('indexed-db'));
 
         const otherItem = await obtainItem(database, 'items', id);
+        if (otherItem.id === id) {
+          return;
+        }
+
         item.order = otherOrder;
         otherItem.order = order;
         await updateItem(database, 'items', item);
@@ -103,7 +167,10 @@ window.addEventListener('load', async () => {
 
       itemDiv.append(span, button);
       itemsDiv.append(itemDiv);
+      _item = item;
     }
+
+    itemsDiv.append(renderDropZone(database, _item));
   }
 });
 

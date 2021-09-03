@@ -22,6 +22,7 @@ input {
 
 #itemsDiv {
   margin: auto;
+  position: relative; /* Parent absolute drop divs to this */
 }
 
 .itemDiv {
@@ -44,4 +45,21 @@ button {
   border: none;
   cursor: pointer;
   padding: 0;
+}
+
+.dropDiv {
+  height: 1ex;
+  margin: -.5ex 0 0;
+  position: absolute;
+  width: 100%;
+}
+
+/* Display all the in-between drop zones when drag and drop occurs */
+.dnd .dropDiv {
+  background: lightgray;
+}
+
+/* Note that :hover cannot be used because it does not fire on drag-hover */
+.dropDiv.hover {
+  background: salmon;
 }
