@@ -57,7 +57,9 @@ window.addEventListener('load', async () => {
         mediaStream.getTracks().forEach(track => track.stop())
 
         const blob = new Blob(chunks);
-        const id = await recordItem(database, 'items', { title: input.value ?? 'Transcribe note', blob });
+
+        // Note that `||` is used to coerce empty string as well (over `??`)
+        const id = await recordItem(database, 'items', { title: input.value || 'Transcribe note', blob });
         const items = await listItems(database, 'items');
 
         // Place item at the top
