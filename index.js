@@ -16,19 +16,8 @@ window.addEventListener('load', async () => {
         return;
       }
 
-      const id = await recordItem(database, 'items', { title: input.value });
-      const items = await listItems(database, 'items');
-
-      // Place item at the top
-      if (items.length > 0) {
-        items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
-        const item = await obtainItem(database, 'items', id);
-        item.order = (items[0].order ?? items[0].id) - 1;
-        await updateItem(database, 'items', item);
-      }
-
+      await prependItem(database, { title: input.value });
       input.value = '';
-      await renderItems(database);
     });
 
     // Keep the input focused
@@ -59,19 +48,9 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks);
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        const id = await recordItem(database, 'items', { title: input.value || 'Transcribe note', blob });
-        const items = await listItems(database, 'items');
-
-        // Place item at the top
-        if (items.length > 0) {
-          items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
-          const item = await obtainItem(database, 'items', id);
-          item.order = (items[0].order ?? items[0].id) - 1;
-          await updateItem(database, 'items', item);
-        }
-
+        await prependItem(database, { title: input.value || 'Transcribe note', blob });
         input.value = '';
-        await renderItems(database);
+        mediaRecorder = undefined;
       });
 
       mediaRecorder.start();
@@ -137,8 +116,7 @@ window.addEventListener('load', async () => {
   }
 
   async function renderItems(/** @type {IDBDatabase} */ database) {
-    const items = await listItems(database, 'items');
-    items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
+    const items = await getSortedItems(database);
     const itemsDiv = document.querySelector('#itemsDiv');
     itemsDiv.innerHTML = '';
 
@@ -261,7 +239,26 @@ window.addEventListener('load', async () => {
 
     itemsDiv.append(renderDropZone(database, _item));
   }
+
+  async function prependItem(/** @type {IDBDatabase} */ database, /** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
+    const id = await recordItem(database, 'items', item);
+    const items = await getSortedItems(database);
+
+    // Place item at the top
+    if (items.length > 0) {
+      const item = await obtainItem(database, 'items', id);
+      item.order = (items[0].order ?? items[0].id) - 1;
+      await updateItem(database, 'items', item);
+    }
+
+    await renderItems(database);
+  }
 });
+
+async function getSortedItems(/** @type {IDBDatabase} */ database) {
+  const items = await listItems(database, 'items');
+  return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
+}
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
