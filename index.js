@@ -253,10 +253,10 @@ window.addEventListener('load', async () => {
 
   function extractTags(/** @type {string} */ title, /** @type {string[]} */ tags = []) {
     title = title.trim();
-    const regex = /((?<tag>[-+][\w-]+)( |$))+$/;
+    const regex = /(^| )((?<tag>[-+][\w-]+)( |$))+$/;
     const match = regex.exec(title);
     if (match) {
-      const modifiers = title.slice(match.index).split(/ /g);
+      const modifiers = title.slice(match.index).trim().split(/ /g);
       title = title.slice(0, -match[0].length).trim();
       for (const modifier of modifiers) {
         const tag = modifier.slice('±'.length);
