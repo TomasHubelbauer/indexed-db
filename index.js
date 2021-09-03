@@ -29,7 +29,11 @@ window.addEventListener('load', async () => {
 
       input.value = '';
       await renderItems(database);
-    })
+    });
+
+    // Keep the input focused
+    document.addEventListener('visibilitychange', () => input.focus());
+    input.focus();
 
     await renderItems(database);
   }
