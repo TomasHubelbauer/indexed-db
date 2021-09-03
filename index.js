@@ -193,7 +193,7 @@ window.addEventListener('load', async () => {
       let match;
       let index = 0;
       while (match = regex.exec(item.title)) {
-        span.textContent += item.title.slice(index, match.index);
+        span.append(item.title.slice(index, match.index));
 
         const a = document.createElement('a');
         a.textContent = match[0].replace(/https?:\/\/(www.)?/, ''); // Strip https?:// and www.
@@ -208,7 +208,7 @@ window.addEventListener('load', async () => {
       }
 
       if (index < item.title.length) {
-        span.textContent += item.title.slice(index);
+        span.append(item.title.slice(index));
       }
 
       span.addEventListener('click', async () => {
