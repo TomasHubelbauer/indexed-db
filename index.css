@@ -15,9 +15,13 @@ body.file::before {
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-input {
+#editorInput {
   margin: 0 auto;
   width: 50%;
+}
+
+#tagsDiv {
+  margin: auto;
 }
 
 #itemsDiv {

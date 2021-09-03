@@ -1,3 +1,5 @@
+const filters = {};
+
 window.addEventListener('load', async () => {
   document.body.classList.toggle(location.protocol.slice(0, -1));
 
@@ -10,7 +12,7 @@ window.addEventListener('load', async () => {
     /** @type {IDBDatabase} */
     const database = await openDatabase();
 
-    const input = document.querySelector('input');
+    const input = document.querySelector('#editorInput');
     input.addEventListener('keypress', async event => {
       if (event.key !== 'Enter' || !input.value) {
         return;
@@ -116,12 +118,38 @@ window.addEventListener('load', async () => {
   }
 
   async function renderItems(/** @type {IDBDatabase} */ database) {
+    /** @type {[]} */
     const items = await getSortedItems(database);
+
+    const tagsDiv = document.querySelector('#tagsDiv');
+    tagsDiv.innerHTML = '';
+    const tags = items.reduce((tags, item) => { item.tags?.forEach(tag => tags.add(tag)); return tags; }, new Set());
+    for (const tag of tags) {
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.id = tag + 'Input';
+      input.checked = filters[tag] ?? true;
+
+      input.addEventListener('change', async () => {
+        filters[tag] = input.checked;
+        await renderItems(database);
+      });
+
+      const label = document.createElement('label');
+      label.htmlFor = tag + 'Input';
+      label.textContent = tag;
+
+      tagsDiv.append(input, label, ' ');
+    }
+
     const itemsDiv = document.querySelector('#itemsDiv');
     itemsDiv.innerHTML = '';
 
+    const filter = Object.keys(filters).length > 0;
+    const filteredItems = items.filter(item => !filter || item.tags?.some(tag => filters[tag] ?? true))
+
     let _item;
-    for (const item of items) {
+    for (const item of filteredItems) {
       itemsDiv.append(renderDropZone(database, _item, item));
 
       const itemDiv = document.createElement('div');
