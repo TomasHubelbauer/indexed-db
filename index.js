@@ -188,7 +188,29 @@ window.addEventListener('load', async () => {
 
       const span = document.createElement('span');
       span.className = 'titleSpan';
-      span.textContent = item.title;
+
+      const regex = /https?:\/\/([\w-]+.)[\w-]+.[\w-]+(\/[\w-]+)+([\?\#][\w-]+)?/g;
+      let match;
+      let index = 0;
+      while (match = regex.exec(item.title)) {
+        span.textContent += item.title.slice(index, match.index);
+
+        const a = document.createElement('a');
+        a.textContent = match[0];
+        a.href = match[0];
+        a.target = '_blank';
+        span.append(a);
+
+        // Stop the click action from triggering the rename operation
+        a.addEventListener('click', event => event.stopPropagation());
+
+        index = match.index + match[0].length;
+      }
+
+      if (index < item.title.length) {
+        span.textContent += item.title.slice(index);
+      }
+
       span.addEventListener('click', async () => {
         const title = prompt('Title:', item.title);
         if (!title) {
