@@ -57,7 +57,7 @@ window.addEventListener('load', async () => {
         mediaStream.getTracks().forEach(track => track.stop())
 
         const blob = new Blob(chunks);
-        const id = await recordItem(database, 'items', { title: 'Transcribe note', blob });
+        const id = await recordItem(database, 'items', { title: input.value ?? 'Transcribe note', blob });
         const items = await listItems(database, 'items');
 
         // Place item at the top
@@ -68,6 +68,7 @@ window.addEventListener('load', async () => {
           await updateItem(database, 'items', item);
         }
 
+        input.value = '';
         await renderItems(database);
       });
 
