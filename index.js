@@ -63,7 +63,7 @@ window.addEventListener('load', async () => {
     throw error;
   }
 
-  function renderDropZone(database, /** @type {{ id: number; title: string; }} */ prev, /** @type {{ id: number; title: string; }} */ next) {
+  function renderDropZone(database, /** @type {{ id: number; order: number; title: string; }} */ prev, /** @type {{ id: number; order: number; title: string; }} */ next) {
     const div = document.createElement('div');
     div.className = 'dropDiv';
     div.title = prev?.title ? next?.title ? `Place between '${prev.title}' and '${next.title}'` : `Place after '${prev.title}'` : `Place before '${next.title}'`;
