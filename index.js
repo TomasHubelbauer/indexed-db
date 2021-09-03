@@ -196,7 +196,7 @@ window.addEventListener('load', async () => {
         span.textContent += item.title.slice(index, match.index);
 
         const a = document.createElement('a');
-        a.textContent = match[0];
+        a.textContent = match[0].replace(/https?:\/\/(www.)?/, ''); // Strip https?:// and www.
         a.href = match[0];
         a.target = '_blank';
         span.append(a);
