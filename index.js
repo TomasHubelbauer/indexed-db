@@ -164,6 +164,15 @@ window.addEventListener('load', async () => {
         await renderItems(database);
       });
 
+      if (item.tags) {
+        for (const tag of item.tags) {
+          const span = document.createElement('span');
+          span.className = 'tagSpan';
+          span.textContent = tag;
+          itemDiv.append(span);
+        }
+      }
+
       const span = document.createElement('span');
       span.className = 'titleSpan';
 
@@ -241,6 +250,31 @@ window.addEventListener('load', async () => {
   }
 
   async function prependItem(/** @type {IDBDatabase} */ database, /** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
+    const regex = /((?<tag>[-+][\w-]+)( |$))+$/;
+    const match = regex.exec(item.title);
+    const title = item.title.slice(0, -match[0]?.length).trim();
+    const tags = item.title
+      .slice(match?.index ?? item.title.length)
+      .split(/ /g)
+      .reduce(
+        (tags, tag) => {
+          if (tag[0] === '+') {
+            tags.push(tag.slice('+'.length));
+            return tags;
+          }
+
+          if (tag[0] === '-') {
+            return tags.filter(t => t !== tag.slice('-'.length));
+          }
+
+          throw new Error('Tag modifier must start with + or -.');
+        },
+        []
+      );
+
+    item.title = title;
+    item.tags = tags;
+
     const id = await recordItem(database, 'items', item);
     const items = await getSortedItems(database);
 

@@ -36,6 +36,12 @@ input {
   background: whitesmoke;
 }
 
+.tagSpan {
+  background: whitesmoke;
+  outline: 1px solid lightgray;
+  padding: 0 .5ex;
+}
+
 .titleSpan {
   flex: 1;
 }
