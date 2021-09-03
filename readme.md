@@ -103,3 +103,10 @@ this SQLite file in other software than Firefox yet.
 
 If they are, I might be able to get away with having Time Machine back them up
 and not even implement import/export in the application.
+
+### Look into how IndexedDB works with `File`s and if they are encrypted, too
+
+If not, export could be implemented by dumping the contents of the IndexedDB
+into a `File` instance and then saving the `File` into the same DB making it
+appear as a standalone file on the disk (presumably that is what the `files`
+directory is for…).
