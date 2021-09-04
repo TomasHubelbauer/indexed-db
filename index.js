@@ -247,36 +247,10 @@ window.addEventListener('load', async () => {
       itemsDiv.classList.toggle('dnd', false);
     }
 
-    async function swapOrder(/** @type {number} */ id, /** @type {number} */ order, /** @type {number} */ otherId, /** @type {number} */ otherOrder) {
-      await patchItem(id, item => item.order = order);
-      await patchItem(otherId, item => item.order = otherOrder);
-      await renderItems();
-    }
-
-    async function toggleDone(/** @type {number} */ id, /** @type {boolean} */ done) {
-      await patchItem(id, item => item.done = done);
-      await renderItems();
-    }
-
-    async function rename(/** @type {number} */ id, /** @type {string} */ title) {
-      await patchItem(id, item => item.title = title);
-      await renderItems();
-    }
-
-    async function tag(/** @type {number} */ id, /** @type {string[]} */ tags) {
-      await patchItem(id, item => item.tags = tags);
-      await renderItems();
-    }
-
-    async function erase(/** @type {number} */ id) {
-      await removeItem(id);
-      await renderItems();
-    }
-
     let _item;
     for (const item of filteredItems) {
       itemsDiv.append(renderDropZone(_item, item));
-      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, swapOrder, toggleDone, rename, tag, erase));
+      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, removeItem, renderItems));
       _item = item;
     }
 

@@ -1,16 +1,14 @@
 import extractTags from './extractTags.js';
 import humanizeBytes from './humanizeBytes.js';
 import humanizeMilliseconds from './humanizeMilliseconds.js';
+import patchItem from './patchItem.js';
 
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; }} */ item,
   onDragStart,
   onDragEnd,
-  swapOrder,
-  toggleDone,
-  rename,
-  tag,
-  erase
+  removeItem,
+  renderItems
 ) {
   const itemDiv = document.createElement('div');
   itemDiv.className = 'itemDiv';
@@ -51,13 +49,19 @@ export default function renderItem(
       return;
     }
 
-    await swapOrder(item.id, otherOrder, id, order);
+    await patchItem(item.id, item => item.order = otherOrder);
+    await patchItem(id, item => item.order = order);
+    await renderItems();
   });
 
   const input = document.createElement('input');
   input.type = 'checkbox';
   input.checked = item.done;
-  input.addEventListener('change', async () => await toggleDone(item.id, input.checked));
+  input.addEventListener('change', async () => {
+    await patchItem(item.id, item => item.done = input.checked);
+    await renderItems();
+  });
+
   itemDiv.append(input);
 
   if (item.tags) {
@@ -104,10 +108,11 @@ export default function renderItem(
 
     // Preserve title if just modifying tags (`+tag`)
     if (title) {
-      await rename(item.id, title);
+      await patchItem(item.id, item => item.title = title);
     }
 
-    await tag(item.id, tags);
+    await patchItem(item.id, item => item.tags = tags);
+    await renderItems();
   });
 
   itemDiv.append(span);
@@ -226,7 +231,8 @@ export default function renderItem(
       return;
     }
 
-    await erase(item.id);
+    await removeItem(item.id);
+    await renderItems();
   });
 
   itemDiv.append(button);
