@@ -1,4 +1,5 @@
 import renderItem from './renderItem.js';
+import extractTags from './extractTags.js';
 
 const filters = {};
 let done = false;
@@ -339,43 +340,13 @@ window.addEventListener('load', async () => {
     let _item;
     for (const item of filteredItems) {
       itemsDiv.append(renderDropZone(database, _item, item));
-      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, swapOrder, toggleDone, extractTags, rename, tag, erase));
+      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, swapOrder, toggleDone, rename, tag, erase));
       _item = item;
     }
 
     if (filteredItems.length > 0) {
       itemsDiv.append(renderDropZone(database, _item));
     }
-  }
-
-  function extractTags(/** @type {string} */ title, /** @type {string[]} */ tags = []) {
-    title = title.trim();
-    const regex = /(^| )((?<tag>[-+][\w\p{Emoji}-]+)( |$))+$/u;
-    const match = regex.exec(title);
-    if (match) {
-      const modifiers = title.slice(match.index).trim().split(/ /g);
-      title = title.slice(0, -match[0].length).trim();
-      for (const modifier of modifiers) {
-        const tag = modifier.slice('±'.length);
-        switch (modifier[0]) {
-          case '+': {
-            tags.push(tag);
-            break;
-          }
-          case '-': {
-            tags = tags.filter(t => t !== tag);
-            break;
-          }
-          default: {
-            throw new Error('Tag modifier must start with + or -.');
-          }
-        }
-      }
-
-      tags.sort();
-    }
-
-    return { title, tags };
   }
 
   function humanizeBytes(/** @type {number} */ bytes) {

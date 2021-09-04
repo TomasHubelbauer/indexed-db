@@ -1,10 +1,11 @@
+import extractTags from './extractTags.js';
+
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; }} */ item,
   onDragStart,
   onDragEnd,
   swapOrder,
   toggleDone,
-  extractTags,
   rename,
   tag,
   erase
@@ -58,8 +59,7 @@ export default function renderItem(
   itemDiv.append(input);
 
   if (item.tags) {
-    // TODO: Sort at creation/modification time to avoid sorting for display
-    for (const tag of item.tags.sort()) {
+    for (const tag of item.tags) {
       const span = document.createElement('span');
       span.className = 'tagSpan';
       span.textContent = tag;
