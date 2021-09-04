@@ -1,4 +1,5 @@
 const filters = {};
+let done = false;
 
 window.addEventListener('load', async () => {
   document.body.classList.toggle(location.protocol.slice(0, -1));
@@ -252,11 +253,28 @@ window.addEventListener('load', async () => {
       tagsDiv.append(input, label, ' ');
     }
 
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.id = 'doneInput';
+    input.checked = done;
+
+    input.addEventListener('change', async () => {
+      done = input.checked;
+      await renderItems(database);
+    });
+
+    const label = document.createElement('label');
+    label.htmlFor = 'doneInput';
+    label.textContent = 'Include done';
+
+    tagsDiv.append(' | ', input, label, ' ');
+
+
     const itemsDiv = document.querySelector('#itemsDiv');
     itemsDiv.innerHTML = '';
 
     const filter = Object.keys(filters).length > 0;
-    const filteredItems = items.filter(item => !filter || item.tags?.some(tag => filters[tag] ?? true))
+    const filteredItems = items.filter(item => (item.done !== true || done) && (!filter || item.tags?.some(tag => filters[tag] ?? true)));
 
     let _item;
     for (const item of filteredItems) {
@@ -308,6 +326,17 @@ window.addEventListener('load', async () => {
         await updateItem(database, 'items', otherItem);
         await renderItems(database);
       });
+
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = item.done;
+      input.addEventListener('change', async () => {
+        item.done = input.checked;
+        await updateItem(database, 'items', item);
+        await renderItems(database);
+      });
+
+      itemDiv.append(input);
 
       if (item.tags) {
         for (const tag of item.tags.sort()) {
@@ -515,7 +544,7 @@ window.addEventListener('load', async () => {
   }
 });
 
-/** @returns {Promise<{ id: number; title: string; order?: number; blob?: Blob; tags?: string[]; }[]>} */
+/** @returns {Promise<{ id: number; title: string; order?: number; blob?: Blob; tags?: string[]; done?: boolean; }[]>} */
 async function getSortedItems(/** @type {IDBDatabase} */ database) {
   const items = await listItems(database, 'items');
   return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
