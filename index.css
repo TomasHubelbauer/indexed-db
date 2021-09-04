@@ -19,6 +19,10 @@ body.file::before {
   margin: auto;
 }
 
+#dailiesDiv button {
+  margin: .5ex;
+}
+
 #editorInput {
   margin: 0 auto;
   width: 50%;
@@ -27,6 +31,10 @@ body.file::before {
 #memoDiv {
   margin: auto;
   text-align: center;
+}
+
+#memoDiv button {
+  margin: .5ex;
 }
 
 @keyframes on-air {

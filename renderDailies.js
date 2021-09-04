@@ -14,7 +14,8 @@ export default async function renderDailies() {
     }
 
     const button = document.createElement('button');
-    button.textContent = daily.title;
+    button.textContent = daily.icon;
+    button.title = daily.title;
     button.addEventListener('click', async () => {
       await upsertEntry('dailies', { id: daily.id, [key]: true });
       await renderDailies();
@@ -26,12 +27,17 @@ export default async function renderDailies() {
   const button = document.createElement('button');
   button.textContent = '➕';
   button.addEventListener('click', async () => {
+    const icon = prompt('Icon:');
+    if (!icon) {
+      return;
+    }
+
     const title = prompt('Title:');
     if (!title) {
       return;
     }
 
-    await upsertEntry('dailies', { title });
+    await upsertEntry('dailies', { icon, title });
     await renderDailies();
   });
 
