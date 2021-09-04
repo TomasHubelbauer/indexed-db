@@ -233,7 +233,7 @@ window.addEventListener('load', async () => {
         }
 
         const { title, tags } = extractTags(str, item.tags ?? []);
-        item.title = title;
+        item.title = title || item.title; // Preserve if just modifying tags
         item.tags = tags;
         await updateItem(database, 'items', item);
         await renderItems(database);
