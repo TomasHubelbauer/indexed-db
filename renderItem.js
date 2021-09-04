@@ -2,12 +2,12 @@ import extractTags from './extractTags.js';
 import humanizeBytes from './humanizeBytes.js';
 import humanizeMilliseconds from './humanizeMilliseconds.js';
 import patchItem from './patchItem.js';
+import removeItem from './removeItem.js';
 
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; }} */ item,
   onDragStart,
   onDragEnd,
-  removeItem,
   renderItems
 ) {
   const itemDiv = document.createElement('div');

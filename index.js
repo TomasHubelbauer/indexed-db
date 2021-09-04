@@ -1,8 +1,8 @@
 import renderItem from './renderItem.js';
-import extractTags from './extractTags.js';
 import connectDatabase from './connectDatabase.js';
-import patchItem from './patchItem.js';
 import renderDropZone from './renderDropZone.js';
+import pageItems from './pageItems.js';
+import createItem from './createItem.js';
 
 const filters = {};
 let done = false;
@@ -29,7 +29,8 @@ window.addEventListener('load', async () => {
         return;
       }
 
-      await prependItem({ title: input.value });
+      await createItem({ title: input.value });
+      await renderItems();
       input.value = '';
     });
 
@@ -62,7 +63,8 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem({ title: input.value || 'Transcribe audio memo', blob, duration: window.performance.now() - stamp });
+        await createItem({ title: input.value || 'Transcribe audio memo', blob, duration: window.performance.now() - stamp });
+        await renderItems();
         input.value = '';
         mediaRecorder = undefined;
         recordAudioButton.classList.toggle('on-air', false);
@@ -106,7 +108,8 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem({ title: input.value || 'Transcribe video memo', blob, duration: window.performance.now() - stamp });
+        await createItem({ title: input.value || 'Transcribe video memo', blob, duration: window.performance.now() - stamp });
+        await renderItems();
         input.value = '';
         mediaRecorder = undefined;
         video.remove();
@@ -148,7 +151,8 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem({ title: input.value || 'Transcribe screen memo', blob, duration: window.performance.now() - stamp });
+        await createItem({ title: input.value || 'Transcribe screen memo', blob, duration: window.performance.now() - stamp });
+        await renderItems();
         input.value = '';
         mediaRecorder = undefined;
         recordScreenButton.classList.toggle('on-air', false);
@@ -179,7 +183,8 @@ window.addEventListener('load', async () => {
         }
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem({ title: input.value || 'Process ' + attacchmentInput.files[0].name, blob: attacchmentInput.files[0] });
+        await createItem({ title: input.value || 'Process ' + attacchmentInput.files[0].name, blob: attacchmentInput.files[0] });
+        await renderItems();
         input.value = '';
       });
     });
@@ -192,7 +197,7 @@ window.addEventListener('load', async () => {
   }
 
   async function renderItems() {
-    const items = await getSortedItems();
+    const items = await pageItems();
 
     const tagsDiv = document.querySelector('#tagsDiv');
     tagsDiv.innerHTML = '';
@@ -250,7 +255,7 @@ window.addEventListener('load', async () => {
     let _item;
     for (const item of filteredItems) {
       itemsDiv.append(renderDropZone(_item, item));
-      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, removeItem, renderItems));
+      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, renderItems));
       _item = item;
     }
 
@@ -258,56 +263,4 @@ window.addEventListener('load', async () => {
       itemsDiv.append(renderDropZone(_item));
     }
   }
-
-  async function prependItem(/** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
-    const { title, tags } = extractTags(item.title);
-    item.title = title;
-    item.tags = tags;
-
-    const id = await recordItem(item);
-    const items = await getSortedItems();
-
-    // Place item at the top
-    if (items.length > 0) {
-      await patchItem(id, item => item.order = (items[0].order ?? items[0].id) - 1);
-    }
-
-    await renderItems();
-  }
 });
-
-/** @returns {Promise<{ id: number; title: string; order?: number; blob?: Blob; tags?: string[]; done?: boolean; }[]>} */
-async function getSortedItems() {
-  const items = await listItems();
-  return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
-}
-
-function listItems() {
-  return new Promise(async (resolve, reject) => {
-    const database = await connectDatabase();
-    const request = database.transaction(['items']).objectStore('items').getAll();
-    request.addEventListener('success', () => resolve(request.result));
-    request.addEventListener('error', () => reject('A getAll error occured.'));
-    database.close();
-  });
-}
-
-function recordItem(/** @type {object} */ item) {
-  return new Promise(async (resolve, reject) => {
-    const database = await connectDatabase();
-    const request = database.transaction(['items'], 'readwrite').objectStore('items').add(item, item.id);
-    request.addEventListener('success', () => resolve(request.result));
-    request.addEventListener('error', () => reject('A transaction error occured.'));
-    database.close();
-  });
-}
-
-function removeItem(/** @type {string | number} */ key) {
-  return new Promise(async (resolve, reject) => {
-    const database = await connectDatabase();
-    const request = database.transaction(['items'], 'readwrite').objectStore('items').delete(key);
-    request.addEventListener('success', resolve);
-    request.addEventListener('error', () => reject('A transaction error occured.'));
-    database.close();
-  });
-}
