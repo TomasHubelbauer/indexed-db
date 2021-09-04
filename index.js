@@ -1,5 +1,6 @@
 import renderItem from './renderItem.js';
 import extractTags from './extractTags.js';
+import connectDatabase from './connectDatabase.js';
 
 const filters = {};
 let done = false;
@@ -13,9 +14,6 @@ window.addEventListener('load', async () => {
   }
 
   try {
-    /** @type {IDBDatabase} */
-    const database = await openDatabase();
-
     const input = document.querySelector('#editorInput');
 
     // Use `keyup` as `keypress` does not get fired for the Escape key
@@ -29,7 +27,7 @@ window.addEventListener('load', async () => {
         return;
       }
 
-      await prependItem(database, { title: input.value });
+      await prependItem({ title: input.value });
       input.value = '';
     });
 
@@ -62,7 +60,7 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe audio memo', blob, duration: window.performance.now() - stamp });
+        await prependItem({ title: input.value || 'Transcribe audio memo', blob, duration: window.performance.now() - stamp });
         input.value = '';
         mediaRecorder = undefined;
         recordAudioButton.classList.toggle('on-air', false);
@@ -106,7 +104,7 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe video memo', blob, duration: window.performance.now() - stamp });
+        await prependItem({ title: input.value || 'Transcribe video memo', blob, duration: window.performance.now() - stamp });
         input.value = '';
         mediaRecorder = undefined;
         video.remove();
@@ -148,7 +146,7 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe screen memo', blob, duration: window.performance.now() - stamp });
+        await prependItem({ title: input.value || 'Transcribe screen memo', blob, duration: window.performance.now() - stamp });
         input.value = '';
         mediaRecorder = undefined;
         recordScreenButton.classList.toggle('on-air', false);
@@ -179,19 +177,19 @@ window.addEventListener('load', async () => {
         }
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Process ' + attacchmentInput.files[0].name, blob: attacchmentInput.files[0] });
+        await prependItem({ title: input.value || 'Process ' + attacchmentInput.files[0].name, blob: attacchmentInput.files[0] });
         input.value = '';
       });
     });
 
-    await renderItems(database);
+    await renderItems();
   }
   catch (error) {
     alert(error);
     throw error;
   }
 
-  function renderDropZone(database, /** @type {{ id: number; order: number; title: string; }} */ prev, /** @type {{ id: number; order: number; title: string; }} */ next) {
+  function renderDropZone(/** @type {{ id: number; order: number; title: string; }} */ prev, /** @type {{ id: number; order: number; title: string; }} */ next) {
     const div = document.createElement('div');
     div.className = 'dropDiv';
     div.title = prev?.title ? next?.title ? `Place between '${prev.title}' and '${next.title}'` : `Place after '${prev.title}'` : `Place before '${next.title}'`;
@@ -214,37 +212,37 @@ window.addEventListener('load', async () => {
           const prevOrder = prev.order ?? prev.id;
           const nextOrder = next.order ?? next.id;
           const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-          const item = await obtainItem(database, 'items', id);
+          const item = await obtainItem(id);
           item.order = (prevOrder + nextOrder) / 2;
-          await updateItem(database, 'items', item);
+          await updateItem(item);
         }
         else {
           const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-          const item = await obtainItem(database, 'items', id);
+          const item = await obtainItem(id);
           item.order = (prev.order ?? prev.id) + 1;
-          await updateItem(database, 'items', item);
+          await updateItem(item);
         }
       }
       else {
         if (next) {
           const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-          const item = await obtainItem(database, 'items', id);
+          const item = await obtainItem(id);
           item.order = (next.order ?? next.id) - 1;
-          await updateItem(database, 'items', item);
+          await updateItem(item);
         }
         else {
           throw new Error('Must have either prev or next!');
         }
       }
 
-      await renderItems(database);
+      await renderItems();
     });
 
     return div;
   }
 
-  async function renderItems(/** @type {IDBDatabase} */ database) {
-    const items = await getSortedItems(database);
+  async function renderItems() {
+    const items = await getSortedItems();
 
     const tagsDiv = document.querySelector('#tagsDiv');
     tagsDiv.innerHTML = '';
@@ -257,7 +255,7 @@ window.addEventListener('load', async () => {
 
       input.addEventListener('change', async () => {
         filters[tag] = input.checked;
-        await renderItems(database);
+        await renderItems();
       });
 
       const label = document.createElement('label');
@@ -274,7 +272,7 @@ window.addEventListener('load', async () => {
 
     input.addEventListener('change', async () => {
       done = input.checked;
-      await renderItems(database);
+      await renderItems();
     });
 
     const label = document.createElement('label');
@@ -300,129 +298,126 @@ window.addEventListener('load', async () => {
     }
 
     async function swapOrder(/** @type {number} */ id, /** @type {number} */ order, /** @type {number} */ otherId, /** @type {number} */ otherOrder) {
-      const item = await obtainItem(database, 'items', id);
+      const item = await obtainItem(id);
       item.order = order;
-      await updateItem(database, 'items', item);
+      await updateItem(item);
 
-      const otherItem = await obtainItem(database, 'items', otherId);
+      const otherItem = await obtainItem(otherId);
       otherItem.order = otherOrder;
-      await updateItem(database, 'items', otherItem);
+      await updateItem(otherItem);
 
-      await renderItems(database);
+      await renderItems();
     }
 
     async function toggleDone(/** @type {number} */ id, /** @type {boolean} */ done) {
-      const item = await obtainItem(database, 'items', id);
+      const item = await obtainItem(id);
       item.done = done;
-      await updateItem(database, 'items', item);
-      await renderItems(database);
+      await updateItem(item);
+      await renderItems();
     }
 
     async function rename(/** @type {number} */ id, /** @type {string} */ title) {
-      const item = await obtainItem(database, 'items', id);
+      const item = await obtainItem(id);
       item.title = title;
-      await updateItem(database, 'items', item);
-      await renderItems(database);
+      await updateItem(item);
+      await renderItems();
     }
 
     async function tag(/** @type {number} */ id, /** @type {string[]} */ tags) {
-      const item = await obtainItem(database, 'items', id);
+      const item = await obtainItem(id);
       item.tags = tags;
-      await updateItem(database, 'items', item);
-      await renderItems(database);
+      await updateItem(item);
+      await renderItems();
     }
 
     async function erase(/** @type {number} */ id) {
-      await removeItem(database, 'items', id);
-      await renderItems(database);
+      await removeItem(id);
+      await renderItems();
     }
 
     let _item;
     for (const item of filteredItems) {
-      itemsDiv.append(renderDropZone(database, _item, item));
+      itemsDiv.append(renderDropZone(_item, item));
       itemsDiv.append(renderItem(item, onDragStart, onDragEnd, swapOrder, toggleDone, rename, tag, erase));
       _item = item;
     }
 
     if (filteredItems.length > 0) {
-      itemsDiv.append(renderDropZone(database, _item));
+      itemsDiv.append(renderDropZone(_item));
     }
   }
 
-  async function prependItem(/** @type {IDBDatabase} */ database, /** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
+  async function prependItem(/** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
     const { title, tags } = extractTags(item.title);
     item.title = title;
     item.tags = tags;
 
-    const id = await recordItem(database, 'items', item);
-    const items = await getSortedItems(database);
+    const id = await recordItem(item);
+    const items = await getSortedItems();
 
     // Place item at the top
     if (items.length > 0) {
-      const item = await obtainItem(database, 'items', id);
+      const item = await obtainItem(id);
       item.order = (items[0].order ?? items[0].id) - 1;
-      await updateItem(database, 'items', item);
+      await updateItem(item);
     }
 
-    await renderItems(database);
+    await renderItems();
   }
 });
 
 /** @returns {Promise<{ id: number; title: string; order?: number; blob?: Blob; tags?: string[]; done?: boolean; }[]>} */
-async function getSortedItems(/** @type {IDBDatabase} */ database) {
-  const items = await listItems(database, 'items');
+async function getSortedItems() {
+  const items = await listItems();
   return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
 }
 
-function openDatabase() {
-  return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open('indexed-db');
-    request.addEventListener('success', () => resolve(request.result));
-    request.addEventListener('error', () => reject('An open error occured.'));
-    request.addEventListener('blocked', () => reject('A blocked error occured.'));
-
-    request.addEventListener('upgradeneeded', () => {
-      request.result.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
-    });
-  });
-}
-
-function listItems(/** @type {IDBDatabase} */ database, /** @type {string} */ store) {
-  return new Promise((resolve, reject) => {
-    const request = database.transaction([store]).objectStore(store).getAll();
+function listItems() {
+  return new Promise(async (resolve, reject) => {
+    const database = await connectDatabase();
+    const request = database.transaction(['items']).objectStore('items').getAll();
     request.addEventListener('success', () => resolve(request.result));
     request.addEventListener('error', () => reject('A getAll error occured.'));
+    database.close();
   });
 }
 
-function recordItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
-  return new Promise((resolve, reject) => {
-    const request = database.transaction([store], 'readwrite').objectStore(store).add(item, item.id);
+function recordItem(/** @type {object} */ item) {
+  return new Promise(async (resolve, reject) => {
+    const database = await connectDatabase();
+    const request = database.transaction(['items'], 'readwrite').objectStore('items').add(item, item.id);
     request.addEventListener('success', () => resolve(request.result));
     request.addEventListener('error', () => reject('A transaction error occured.'));
+    database.close();
   });
 }
 
-function removeItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {string | number} */ key) {
-  return new Promise((resolve, reject) => {
-    const request = database.transaction([store], 'readwrite').objectStore(store).delete(key);
+function removeItem(/** @type {string | number} */ key) {
+  return new Promise(async (resolve, reject) => {
+    const database = await connectDatabase();
+    const request = database.transaction(['items'], 'readwrite').objectStore('items').delete(key);
     request.addEventListener('success', resolve);
     request.addEventListener('error', () => reject('A transaction error occured.'));
+    database.close();
   });
 }
 
-function obtainItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {string | number} */ key) {
-  return new Promise((resolve, reject) => {
-    const request = database.transaction([store], 'readwrite').objectStore(store).get(key);
+function obtainItem(/** @type {string | number} */ key) {
+  return new Promise(async (resolve, reject) => {
+    const database = await connectDatabase();
+    const request = database.transaction(['items'], 'readwrite').objectStore('items').get(key);
     request.addEventListener('success', () => resolve(request.result));
     request.addEventListener('error', () => reject('A transaction error occured.'));
+    database.close();
   });
 }
 
-function updateItem(/** @type {IDBDatabase} */ database, /** @type {string} */ store, /** @type {object} */ item) {
-  return new Promise((resolve, reject) => {
-    const request = database.transaction([store], 'readwrite').objectStore(store).put(item);
+function updateItem(/** @type {object} */ item) {
+  return new Promise(async (resolve, reject) => {
+    const database = await connectDatabase();
+    const request = database.transaction(['items'], 'readwrite').objectStore('items').put(item);
     request.addEventListener('success', resolve);
     request.addEventListener('error', () => reject('A transaction error occured.'));
+    database.close();
   });
 }
