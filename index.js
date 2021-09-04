@@ -118,7 +118,6 @@ window.addEventListener('load', async () => {
   }
 
   async function renderItems(/** @type {IDBDatabase} */ database) {
-    /** @type {[]} */
     const items = await getSortedItems(database);
 
     const tagsDiv = document.querySelector('#tagsDiv');
@@ -193,7 +192,7 @@ window.addEventListener('load', async () => {
       });
 
       if (item.tags) {
-        for (const tag of item.tags) {
+        for (const tag of item.tags.sort()) {
           const span = document.createElement('span');
           span.className = 'tagSpan';
           span.textContent = tag;
@@ -302,6 +301,8 @@ window.addEventListener('load', async () => {
           }
         }
       }
+
+      tags.sort();
     }
 
     return { title, tags };
@@ -326,6 +327,7 @@ window.addEventListener('load', async () => {
   }
 });
 
+/** @returns {{ title: string; order?: number; blob?: Blob; tags?: string[]; }[]} */
 async function getSortedItems(/** @type {IDBDatabase} */ database) {
   const items = await listItems(database, 'items');
   return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
