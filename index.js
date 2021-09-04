@@ -35,6 +35,7 @@ window.addEventListener('load', async () => {
     input.focus();
 
     let mediaRecorder;
+    let stamp;
 
     const recordAudioButton = document.querySelector('#recordAudioButton');
     recordAudioButton.addEventListener('click', async () => {
@@ -58,7 +59,7 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe audio memo', blob });
+        await prependItem(database, { title: input.value || 'Transcribe audio memo', blob, duration: window.performance.now() - stamp });
         input.value = '';
         mediaRecorder = undefined;
         recordAudioButton.classList.toggle('on-air', false);
@@ -66,6 +67,7 @@ window.addEventListener('load', async () => {
         recordScreenButton.classList.toggle('hidden', false);
       });
 
+      stamp = window.performance.now();
       mediaRecorder.start();
       recordAudioButton.classList.toggle('on-air', true);
       recordVideoButton.classList.toggle('hidden', true);
@@ -101,7 +103,7 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe video memo', blob });
+        await prependItem(database, { title: input.value || 'Transcribe video memo', blob, duration: window.performance.now() - stamp });
         input.value = '';
         mediaRecorder = undefined;
         video.remove();
@@ -110,6 +112,7 @@ window.addEventListener('load', async () => {
         recordScreenButton.classList.toggle('hidden', false);
       });
 
+      stamp = window.performance.now();
       mediaRecorder.start();
       recordVideoButton.classList.toggle('on-air', true);
       recordAudioButton.classList.toggle('hidden', true);
@@ -142,7 +145,7 @@ window.addEventListener('load', async () => {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe screen memo', blob });
+        await prependItem(database, { title: input.value || 'Transcribe screen memo', blob, duration: window.performance.now() - stamp });
         input.value = '';
         mediaRecorder = undefined;
         recordScreenButton.classList.toggle('on-air', false);
@@ -150,6 +153,7 @@ window.addEventListener('load', async () => {
         recordVideoButton.classList.toggle('hidden', false);
       });
 
+      stamp = window.performance.now();
       mediaRecorder.start();
       recordScreenButton.classList.toggle('on-air', true);
       recordAudioButton.classList.toggle('hidden', true);
@@ -412,6 +416,7 @@ window.addEventListener('load', async () => {
               });
             });
 
+            button.append(' ', humanizeMilliseconds(item.duration));
             itemDiv.append(button);
             break;
           }
@@ -435,6 +440,7 @@ window.addEventListener('load', async () => {
               });
             });
 
+            button.append(' ', humanizeMilliseconds(item.duration));
             itemDiv.append(button);
             break;
           }
@@ -559,6 +565,26 @@ window.addEventListener('load', async () => {
 
     const span = document.createElement('span');
     span.textContent = bytes.toFixed(2) + ' ' + ['B', 'kB', 'MB', 'GB'][order];
+    span.style.color = 'gray';
+    return span;
+  }
+
+  function humanizeMilliseconds(/** @type {number} */ milliseconds) {
+    milliseconds /= 1000;
+    const seconds = ~~(milliseconds % 60);
+    milliseconds /= 60;
+    const minutes = ~~(milliseconds % 60);
+    milliseconds /= 60;
+    const hours = ~~(milliseconds % 24);
+
+    const span = document.createElement('span');
+
+    if (hours) {
+      span.textContent += hours.toString().padStart(2, '0') + ':';
+    }
+
+    span.textContent += minutes.toString().padStart(2, '0') + ':';
+    span.textContent += seconds.toString().padStart(2, '0');
     span.style.color = 'gray';
     return span;
   }
