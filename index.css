@@ -83,6 +83,14 @@ body.file::before {
   flex: 1;
 }
 
+.deleteButton {
+  visibility: hidden;
+}
+
+.itemDiv:hover .deleteButton {
+  visibility: initial;
+}
+
 button {
   background: none;
   border: none;
