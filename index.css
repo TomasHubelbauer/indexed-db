@@ -67,6 +67,12 @@ body.file::before {
   background: whitesmoke;
 }
 
+/* Note that :hover cannot be used because it does not fire on drag-hover */
+.dnd .itemDiv.hover {
+  background: salmon;
+  color: white;
+}
+
 .tagSpan {
   background: whitesmoke;
   outline: 1px solid lightgray;

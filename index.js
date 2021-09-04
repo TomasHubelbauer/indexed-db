@@ -281,8 +281,15 @@ window.addEventListener('load', async () => {
 
       itemDiv.addEventListener('dragend', () => itemsDiv.classList.toggle('dnd', false));
 
-      // Note that this event must be handled even if only to prevent default
-      itemDiv.addEventListener('dragover', event => event.preventDefault());
+      itemDiv.addEventListener('dragover', event => {
+        event.preventDefault();
+        const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
+        event.currentTarget.classList.toggle('hover', id !== item.id);
+      });
+
+      itemDiv.addEventListener('dragexit', event => {
+        event.currentTarget.classList.toggle('hover', false);
+      });
 
       itemDiv.addEventListener('drop', async event => {
         event.preventDefault();
@@ -508,7 +515,7 @@ window.addEventListener('load', async () => {
   }
 });
 
-/** @returns {Promise<{ title: string; order?: number; blob?: Blob; tags?: string[]; }[]>} */
+/** @returns {Promise<{ id: number; title: string; order?: number; blob?: Blob; tags?: string[]; }[]>} */
 async function getSortedItems(/** @type {IDBDatabase} */ database) {
   const items = await listItems(database, 'items');
   return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));
