@@ -148,6 +148,27 @@ window.addEventListener('load', async () => {
       recordVideoButton.classList.toggle('hidden', true);
     });
 
+    const attachFileButton = document.querySelector('#attachFileButton');
+    attachFileButton.addEventListener('click', () => {
+      const attacchmentInput = document.createElement('input');
+      attacchmentInput.type = 'file';
+      attacchmentInput.click();
+      attacchmentInput.addEventListener('change', async () => {
+        if (attacchmentInput.files.length > 1) {
+          alert('Only one file can be added at a time!');
+          return;
+        }
+
+        if (attacchmentInput.files.length === 0) {
+          return;
+        }
+
+        // Note that `||` is used to coerce empty string as well (over `??`)
+        await prependItem(database, { title: input.value || 'Process ' + attacchmentInput.files[0].name, blob: attacchmentInput.files[0] });
+        input.value = '';
+      });
+    });
+
     await renderItems(database);
   }
   catch (error) {
@@ -374,8 +395,45 @@ window.addEventListener('load', async () => {
             itemDiv.append(button);
             break;
           }
+          case 'image/jpg':
+          case 'image/png': {
+            const button = document.createElement('button');
+            button.textContent = '🖼 ' + item.blob.name;
+            button.addEventListener('click', async event => {
+              // Prevent the rename operation
+              event.preventDefault();
+
+              const url = URL.createObjectURL(item.blob);
+              const img = document.createElement('img');
+              img.src = url;
+              img.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement === null) {
+                  img.remove();
+                }
+              });
+
+              document.body.append(img);
+              await img.requestFullscreen();
+            });
+
+            itemDiv.append(button);
+            break;
+          }
           default: {
-            itemDiv.append('Blob?');
+            const button = document.createElement('button');
+            button.textContent = '📋 ' + item.blob.name;
+            button.addEventListener('click', async event => {
+              // Prevent the rename operation
+              event.preventDefault();
+
+              const url = URL.createObjectURL(item.blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = item.blob.name;
+              a.click();
+            });
+
+            itemDiv.append(button);
           }
         }
       }
