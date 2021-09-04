@@ -275,7 +275,9 @@ window.addEventListener('load', async () => {
       _item = item;
     }
 
-    itemsDiv.append(renderDropZone(database, _item));
+    if (filteredItems.length > 0) {
+      itemsDiv.append(renderDropZone(database, _item));
+    }
   }
 
   function extractTags(/** @type {string} */ title, /** @type {string[]} */ tags = []) {
