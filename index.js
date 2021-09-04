@@ -28,8 +28,8 @@ window.addEventListener('load', async () => {
 
     let mediaRecorder;
 
-    const recordButton = document.querySelector('#recordButton');
-    recordButton.addEventListener('click', async () => {
+    const recordAudioButton = document.querySelector('#recordAudioButton');
+    recordAudioButton.addEventListener('click', async () => {
       if (mediaRecorder) {
         mediaRecorder.stop();
         return;
@@ -47,15 +47,61 @@ window.addEventListener('load', async () => {
         // Stop all tracks to release user media and hide browser media indicators
         mediaStream.getTracks().forEach(track => track.stop())
 
-        const blob = new Blob(chunks);
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
 
         // Note that `||` is used to coerce empty string as well (over `??`)
-        await prependItem(database, { title: input.value || 'Transcribe note', blob });
+        await prependItem(database, { title: input.value || 'Transcribe audio memo', blob });
         input.value = '';
         mediaRecorder = undefined;
+        recordAudioButton.classList.toggle('on-air', false);
+        recordVideoButton.classList.toggle('hidden', false);
       });
 
       mediaRecorder.start();
+      recordAudioButton.classList.toggle('on-air', true);
+      recordVideoButton.classList.toggle('hidden', true);
+    });
+
+    const recordVideoButton = document.querySelector('#recordVideoButton');
+    recordVideoButton.addEventListener('click', async () => {
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+        return;
+      }
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
+
+      const video = document.createElement('video');
+      video.srcObject = mediaStream;
+      video.muted = true;
+      video.controls = true;
+      await video.play();
+      document.querySelector('#memoDiv').append(video);
+
+      /** @type {Blob[]} */
+      const chunks = [];
+
+      mediaRecorder.addEventListener('dataavailable', event => chunks.push(event.data));
+
+      mediaRecorder.addEventListener('stop', async () => {
+        // Stop all tracks to release user media and hide browser media indicators
+        mediaStream.getTracks().forEach(track => track.stop())
+
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+
+        // Note that `||` is used to coerce empty string as well (over `??`)
+        await prependItem(database, { title: input.value || 'Transcribe video memo', blob });
+        input.value = '';
+        mediaRecorder = undefined;
+        video.remove();
+        recordVideoButton.classList.toggle('on-air', false);
+        recordAudioButton.classList.toggle('hidden', false);
+      });
+
+      mediaRecorder.start();
+      recordVideoButton.classList.toggle('on-air', true);
+      recordAudioButton.classList.toggle('hidden', true);
     });
 
     await renderItems(database);
@@ -241,22 +287,53 @@ window.addEventListener('load', async () => {
       itemDiv.append(span);
 
       if (item.blob) {
-        const button = document.createElement('button');
-        button.textContent = '🔈';
-        button.addEventListener('click', async event => {
-          // Prevent the rename operation
-          event.preventDefault();
+        switch (item.blob.type) {
+          case 'audio/webm': {
+            const button = document.createElement('button');
+            button.textContent = '🔈';
+            button.addEventListener('click', async event => {
+              // Prevent the rename operation
+              event.preventDefault();
 
-          const audio = document.createElement('audio');
-          audio.src = URL.createObjectURL(item.blob);
-          await audio.play();
-          audio.addEventListener('ended', () => {
-            URL.revokeObjectURL(audio.src);
-            audio.remove();
-          });
-        });
+              const audio = document.createElement('audio');
+              audio.src = URL.createObjectURL(item.blob);
+              await audio.play();
+              audio.addEventListener('ended', () => {
+                URL.revokeObjectURL(audio.src);
+                audio.remove();
+              });
+            });
 
-        itemDiv.append(button);
+            itemDiv.append(button);
+            break;
+          }
+          case 'video/webm': {
+            const button = document.createElement('button');
+            button.textContent = '📺';
+            button.addEventListener('click', async event => {
+              // Prevent the rename operation
+              event.preventDefault();
+
+              const video = document.createElement('video');
+              video.src = URL.createObjectURL(item.blob);
+              video.controls = true;
+              document.body.append(video);
+              await video.requestFullscreen();
+              await video.play();
+              video.addEventListener('ended', async () => {
+                await document.exitFullscreen();
+                URL.revokeObjectURL(video.src);
+                video.remove();
+              });
+            });
+
+            itemDiv.append(button);
+            break;
+          }
+          default: {
+            itemDiv.append('Blob?');
+          }
+        }
       }
 
       const button = document.createElement('button');
@@ -329,7 +406,7 @@ window.addEventListener('load', async () => {
   }
 });
 
-/** @returns {{ title: string; order?: number; blob?: Blob; tags?: string[]; }[]} */
+/** @returns {Promise<{ title: string; order?: number; blob?: Blob; tags?: string[]; }[]>} */
 async function getSortedItems(/** @type {IDBDatabase} */ database) {
   const items = await listItems(database, 'items');
   return items.sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id));

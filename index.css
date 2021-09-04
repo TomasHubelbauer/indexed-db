@@ -20,6 +20,33 @@ body.file::before {
   width: 50%;
 }
 
+#memoDiv {
+  margin: auto;
+  text-align: center;
+}
+
+@keyframes on-air {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#memoDiv video {
+  display: block;
+}
+
+.on-air {
+  animation: on-air 1s infinite;
+}
+
+.hidden {
+  display: none;
+}
+
 #tagsDiv {
   margin: auto;
 }
