@@ -1,11 +1,5 @@
-import renderItem from './renderItem.js';
-import connectDatabase from './connectDatabase.js';
-import renderDropZone from './renderDropZone.js';
-import pageItems from './pageItems.js';
 import createItem from './createItem.js';
-
-const filters = {};
-let done = false;
+import renderItems from './renderItems.js';
 
 window.addEventListener('load', async () => {
   document.body.classList.toggle(location.protocol.slice(0, -1));
@@ -194,73 +188,5 @@ window.addEventListener('load', async () => {
   catch (error) {
     alert(error);
     throw error;
-  }
-
-  async function renderItems() {
-    const items = await pageItems();
-
-    const tagsDiv = document.querySelector('#tagsDiv');
-    tagsDiv.innerHTML = '';
-    const tags = items.reduce((tags, item) => { item.tags?.forEach(tag => tags.add(tag)); return tags; }, new Set());
-    for (const tag of tags) {
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.id = tag + 'Input';
-      input.checked = filters[tag] ?? true;
-
-      input.addEventListener('change', async () => {
-        filters[tag] = input.checked;
-        await renderItems();
-      });
-
-      const label = document.createElement('label');
-      label.htmlFor = tag + 'Input';
-      label.textContent = tag;
-
-      tagsDiv.append(input, label, ' ');
-    }
-
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.id = 'doneInput';
-    input.checked = done;
-
-    input.addEventListener('change', async () => {
-      done = input.checked;
-      await renderItems();
-    });
-
-    const label = document.createElement('label');
-    label.htmlFor = 'doneInput';
-    label.textContent = 'Include done';
-
-    tagsDiv.append(' | ', input, label, ' ');
-
-
-    const itemsDiv = document.querySelector('#itemsDiv');
-    itemsDiv.innerHTML = '';
-
-    const filter = Object.keys(filters).length > 0;
-    const filteredItems = items.filter(item => (item.done !== true || done) && (!filter || item.tags?.some(tag => filters[tag] ?? true)));
-
-    function onDragStart() {
-      // Mark the list as drag-and-drop occuring to show in-between drop zones
-      itemsDiv.classList.toggle('dnd', true);
-    }
-
-    function onDragEnd() {
-      itemsDiv.classList.toggle('dnd', false);
-    }
-
-    let _item;
-    for (const item of filteredItems) {
-      itemsDiv.append(renderDropZone(_item, item));
-      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, renderItems));
-      _item = item;
-    }
-
-    if (filteredItems.length > 0) {
-      itemsDiv.append(renderDropZone(_item));
-    }
   }
 });
