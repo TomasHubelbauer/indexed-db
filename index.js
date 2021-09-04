@@ -1,6 +1,7 @@
 import createItem from './createItem.js';
 import renderItems from './renderItems.js';
 import renderDailies from './renderDailies.js';
+import renderWeeklies from './renderWeeklies.js';
 
 window.addEventListener('load', async () => {
   document.body.classList.toggle(location.protocol.slice(0, -1));
@@ -12,6 +13,7 @@ window.addEventListener('load', async () => {
 
   try {
     await renderDailies();
+    await renderWeeklies();
 
     const input = document.querySelector('#editorInput');
 

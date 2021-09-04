@@ -7,8 +7,12 @@ export default async function renderDailies() {
   const dailiesDiv = document.querySelector('#dailiesDiv');
   dailiesDiv.innerHTML = '';
 
+  const key = new Date().toISOString().slice(0, 10);
+  const titleDiv = document.createElement('div');
+  titleDiv.textContent = key;
+  dailiesDiv.append(titleDiv);
+
   for (const daily of dailies) {
-    const key = new Date().toISOString().slice(0, 10);
     if (daily[key]) {
       continue;
     }
