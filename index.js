@@ -1,6 +1,7 @@
 import renderItem from './renderItem.js';
 import extractTags from './extractTags.js';
 import connectDatabase from './connectDatabase.js';
+import patchItem from './patchItem.js';
 
 const filters = {};
 let done = false;
@@ -207,28 +208,20 @@ window.addEventListener('load', async () => {
       event.preventDefault();
       event.currentTarget.classList.toggle('hover', false);
 
+      const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
       if (prev) {
         if (next) {
           const prevOrder = prev.order ?? prev.id;
           const nextOrder = next.order ?? next.id;
-          const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-          const item = await obtainItem(id);
-          item.order = (prevOrder + nextOrder) / 2;
-          await updateItem(item);
+          await patchItem(id, item => item.order = (prevOrder + nextOrder) / 2);
         }
         else {
-          const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-          const item = await obtainItem(id);
-          item.order = (prev.order ?? prev.id) + 1;
-          await updateItem(item);
+          await patchItem(id, item => item.order = (prev.order ?? prev.id) + 1);
         }
       }
       else {
         if (next) {
-          const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-          const item = await obtainItem(id);
-          item.order = (next.order ?? next.id) - 1;
-          await updateItem(item);
+          await patchItem(id, item => item.order = (next.order ?? next.id) - 1);
         }
         else {
           throw new Error('Must have either prev or next!');
@@ -298,35 +291,23 @@ window.addEventListener('load', async () => {
     }
 
     async function swapOrder(/** @type {number} */ id, /** @type {number} */ order, /** @type {number} */ otherId, /** @type {number} */ otherOrder) {
-      const item = await obtainItem(id);
-      item.order = order;
-      await updateItem(item);
-
-      const otherItem = await obtainItem(otherId);
-      otherItem.order = otherOrder;
-      await updateItem(otherItem);
-
+      await patchItem(id, item => item.order = order);
+      await patchItem(otherId, item => item.order = otherOrder);
       await renderItems();
     }
 
     async function toggleDone(/** @type {number} */ id, /** @type {boolean} */ done) {
-      const item = await obtainItem(id);
-      item.done = done;
-      await updateItem(item);
+      await patchItem(id, item => item.done = done);
       await renderItems();
     }
 
     async function rename(/** @type {number} */ id, /** @type {string} */ title) {
-      const item = await obtainItem(id);
-      item.title = title;
-      await updateItem(item);
+      await patchItem(id, item => item.title = title);
       await renderItems();
     }
 
     async function tag(/** @type {number} */ id, /** @type {string[]} */ tags) {
-      const item = await obtainItem(id);
-      item.tags = tags;
-      await updateItem(item);
+      await patchItem(id, item => item.tags = tags);
       await renderItems();
     }
 
@@ -357,9 +338,7 @@ window.addEventListener('load', async () => {
 
     // Place item at the top
     if (items.length > 0) {
-      const item = await obtainItem(id);
-      item.order = (items[0].order ?? items[0].id) - 1;
-      await updateItem(item);
+      await patchItem(id, item => item.order = (items[0].order ?? items[0].id) - 1);
     }
 
     await renderItems();
@@ -396,26 +375,6 @@ function removeItem(/** @type {string | number} */ key) {
   return new Promise(async (resolve, reject) => {
     const database = await connectDatabase();
     const request = database.transaction(['items'], 'readwrite').objectStore('items').delete(key);
-    request.addEventListener('success', resolve);
-    request.addEventListener('error', () => reject('A transaction error occured.'));
-    database.close();
-  });
-}
-
-function obtainItem(/** @type {string | number} */ key) {
-  return new Promise(async (resolve, reject) => {
-    const database = await connectDatabase();
-    const request = database.transaction(['items'], 'readwrite').objectStore('items').get(key);
-    request.addEventListener('success', () => resolve(request.result));
-    request.addEventListener('error', () => reject('A transaction error occured.'));
-    database.close();
-  });
-}
-
-function updateItem(/** @type {object} */ item) {
-  return new Promise(async (resolve, reject) => {
-    const database = await connectDatabase();
-    const request = database.transaction(['items'], 'readwrite').objectStore('items').put(item);
     request.addEventListener('success', resolve);
     request.addEventListener('error', () => reject('A transaction error occured.'));
     database.close();
