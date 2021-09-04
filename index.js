@@ -1,3 +1,5 @@
+import renderItem from './renderItem.js';
+
 const filters = {};
 let done = false;
 
@@ -287,237 +289,57 @@ window.addEventListener('load', async () => {
     const filter = Object.keys(filters).length > 0;
     const filteredItems = items.filter(item => (item.done !== true || done) && (!filter || item.tags?.some(tag => filters[tag] ?? true)));
 
+    function onDragStart() {
+      // Mark the list as drag-and-drop occuring to show in-between drop zones
+      itemsDiv.classList.toggle('dnd', true);
+    }
+
+    function onDragEnd() {
+      itemsDiv.classList.toggle('dnd', false);
+    }
+
+    async function swapOrder(/** @type {number} */ id, /** @type {number} */ order, /** @type {number} */ otherId, /** @type {number} */ otherOrder) {
+      const item = await obtainItem(database, 'items', id);
+      item.order = order;
+      await updateItem(database, 'items', item);
+
+      const otherItem = await obtainItem(database, 'items', otherId);
+      otherItem.order = otherOrder;
+      await updateItem(database, 'items', otherItem);
+
+      await renderItems(database);
+    }
+
+    async function toggleDone(/** @type {number} */ id, /** @type {boolean} */ done) {
+      const item = await obtainItem(database, 'items', id);
+      item.done = done;
+      await updateItem(database, 'items', item);
+      await renderItems(database);
+    }
+
+    async function rename(/** @type {number} */ id, /** @type {string} */ title) {
+      const item = await obtainItem(database, 'items', id);
+      item.title = title;
+      await updateItem(database, 'items', item);
+      await renderItems(database);
+    }
+
+    async function tag(/** @type {number} */ id, /** @type {string[]} */ tags) {
+      const item = await obtainItem(database, 'items', id);
+      item.tags = tags;
+      await updateItem(database, 'items', item);
+      await renderItems(database);
+    }
+
+    async function erase(/** @type {number} */ id) {
+      await removeItem(database, 'items', id);
+      await renderItems(database);
+    }
+
     let _item;
     for (const item of filteredItems) {
       itemsDiv.append(renderDropZone(database, _item, item));
-
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'itemDiv';
-      itemDiv.draggable = true;
-      itemDiv.dataset.id = item.id;
-      itemDiv.dataset.order = item.order ?? item.id;
-
-      itemDiv.addEventListener('dragstart', event => {
-        // Copy the ID in as text so that dragging it to an input shows its ID
-        event.dataTransfer.setData('text/plain', item.id);
-
-        // Copy the ID in an application-specific way to not get fakes in drop
-        event.dataTransfer.setData('indexed-db', JSON.stringify({ id: item.id, order: item.order ?? item.id }));
-
-        // Mark the list as drag-and-drop occuring to show in-between drop zones
-        itemsDiv.classList.toggle('dnd', true);
-      });
-
-      itemDiv.addEventListener('dragend', () => itemsDiv.classList.toggle('dnd', false));
-
-      itemDiv.addEventListener('dragover', event => {
-        event.preventDefault();
-        const { id } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-        event.currentTarget.classList.toggle('hover', id !== item.id);
-      });
-
-      itemDiv.addEventListener('dragexit', event => {
-        event.currentTarget.classList.toggle('hover', false);
-      });
-
-      itemDiv.addEventListener('drop', async event => {
-        event.preventDefault();
-
-        const order = Number(event.currentTarget.dataset.order);
-        const { id, order: otherOrder } = JSON.parse(event.dataTransfer.getData('indexed-db'));
-
-        const otherItem = await obtainItem(database, 'items', id);
-        if (otherItem.id === id) {
-          return;
-        }
-
-        item.order = otherOrder;
-        otherItem.order = order;
-        await updateItem(database, 'items', item);
-        await updateItem(database, 'items', otherItem);
-        await renderItems(database);
-      });
-
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.checked = item.done;
-      input.addEventListener('change', async () => {
-        item.done = input.checked;
-        await updateItem(database, 'items', item);
-        await renderItems(database);
-      });
-
-      itemDiv.append(input);
-
-      if (item.tags) {
-        for (const tag of item.tags.sort()) {
-          const span = document.createElement('span');
-          span.className = 'tagSpan';
-          span.textContent = tag;
-          itemDiv.append(span);
-        }
-      }
-
-      const span = document.createElement('span');
-      span.className = 'titleSpan';
-
-      const regex = /https?:\/\/([\w-]+.)[\w-]+.[\w-]+(\/[\w-]+)+([\?\#][\w-]+)?/g;
-      let match;
-      let index = 0;
-      while (match = regex.exec(item.title)) {
-        span.append(item.title.slice(index, match.index));
-
-        const a = document.createElement('a');
-        a.textContent = match[0].replace(/https?:\/\/(www.)?/, ''); // Strip https?:// and www.
-        a.href = match[0];
-        a.target = '_blank';
-        span.append(a);
-
-        // Stop the click action from triggering the rename operation
-        a.addEventListener('click', event => event.stopPropagation());
-
-        index = match.index + match[0].length;
-      }
-
-      if (index < item.title.length) {
-        span.append(item.title.slice(index));
-      }
-
-      span.addEventListener('click', async () => {
-        const str = prompt('Title:', item.title);
-        if (!str) {
-          return;
-        }
-
-        const { title, tags } = extractTags(str, item.tags ?? []);
-        item.title = title || item.title; // Preserve if just modifying tags
-        item.tags = tags;
-        await updateItem(database, 'items', item);
-        await renderItems(database);
-      });
-
-      itemDiv.append(span);
-
-      if (item.blob) {
-        switch (item.blob.type) {
-          case 'audio/webm': {
-            const button = document.createElement('button');
-            button.textContent = '🔈';
-            button.addEventListener('click', async event => {
-              // Prevent the rename operation
-              event.preventDefault();
-
-              const audio = document.createElement('audio');
-              audio.src = URL.createObjectURL(item.blob);
-              await audio.play();
-              audio.addEventListener('ended', () => {
-                URL.revokeObjectURL(audio.src);
-                audio.remove();
-              });
-            });
-
-            button.append(' ', humanizeMilliseconds(item.duration));
-            itemDiv.append(button);
-            break;
-          }
-          case 'video/webm': {
-            const button = document.createElement('button');
-            button.textContent = '📺';
-            button.addEventListener('click', async event => {
-              // Prevent the rename operation
-              event.preventDefault();
-
-              const video = document.createElement('video');
-              video.src = URL.createObjectURL(item.blob);
-              video.controls = true;
-              document.body.append(video);
-              await video.requestFullscreen();
-              await video.play();
-              video.addEventListener('ended', async () => {
-                await document.exitFullscreen();
-                URL.revokeObjectURL(video.src);
-                video.remove();
-              });
-            });
-
-            button.append(' ', humanizeMilliseconds(item.duration));
-            itemDiv.append(button);
-            break;
-          }
-          case 'image/jpg':
-          case 'image/png': {
-            const button = document.createElement('button');
-            button.textContent = '🖼 ' + item.blob.name;
-            button.addEventListener('click', async event => {
-              // Prevent the rename operation
-              event.preventDefault();
-
-              const url = URL.createObjectURL(item.blob);
-              const img = document.createElement('img');
-              img.src = url;
-              img.addEventListener('fullscreenchange', () => {
-                if (document.fullscreenElement === null) {
-                  URL.revokeObjectURL(url);
-                  img.remove();
-                }
-              });
-
-              document.body.append(img);
-              await img.requestFullscreen();
-            });
-
-            button.append(' ', humanizeBytes(item.blob.size));
-
-            const url = URL.createObjectURL(item.blob);
-            const img = document.createElement('img');
-            img.src = url;
-            img.addEventListener('load', () => {
-              URL.revokeObjectURL(url);
-
-              const span = document.createElement('span');
-              span.textContent = img.naturalWidth + '×' + img.naturalHeight + ' px';
-              span.style.color = 'gray';
-
-              button.append(' ', span);
-            });
-
-            itemDiv.append(button);
-            break;
-          }
-          default: {
-            const button = document.createElement('button');
-            button.textContent = '📋 ' + item.blob.name;
-            button.addEventListener('click', async event => {
-              // Prevent the rename operation
-              event.preventDefault();
-
-              const url = URL.createObjectURL(item.blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = item.blob.name;
-              a.click();
-            });
-
-            button.append(' ', humanizeBytes(item.blob.size));
-            itemDiv.append(button);
-          }
-        }
-      }
-
-      const button = document.createElement('button');
-      button.className = 'deleteButton';
-      button.textContent = '❌';
-      button.addEventListener('click', async () => {
-        if (!confirm(`Delete ${item.title}?`)) {
-          return;
-        }
-
-        await removeItem(database, 'items', item.id);
-        await renderItems(database);
-      });
-
-      itemDiv.append(button);
-      itemsDiv.append(itemDiv);
+      itemsDiv.append(renderItem(item, onDragStart, onDragEnd, swapOrder, toggleDone, extractTags, rename, tag, erase));
       _item = item;
     }
 

@@ -28,6 +28,21 @@ in order to implement a to-do list application.
 
 ## Notes
 
+### `file:` protocol and CORS
+
+Firefox will not allow for ESM to work on `file:` protocol due to CORS. A call
+to another module using the `import` keyword will fail with an error that says:
+*CORS request not HTTP*. More about this error at:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors/CORSRequestNotHttp
+
+This can be worked around by using a static file server and using the `http:`
+protocol or by setting `privacy.file_unique_origin` to `false` in the Firefox's
+`about:config` page. This makes the browser vulnerable to this CVE:
+https://www.mozilla.org/en-US/security/advisories/mfsa2019-21/#CVE-2019-11730.
+More in this bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1558299. Do not
+disable this mitigation if you plan on opening potentially malicious local HTML
+files.
+
 ### IndexedDB SQLite Database
 
 To find the database backing the IndexedDB instance of the page, go to Firefox >
