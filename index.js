@@ -451,12 +451,28 @@ window.addEventListener('load', async () => {
               img.src = url;
               img.addEventListener('fullscreenchange', () => {
                 if (document.fullscreenElement === null) {
+                  URL.revokeObjectURL(url);
                   img.remove();
                 }
               });
 
               document.body.append(img);
               await img.requestFullscreen();
+            });
+
+            button.append(' ', humanizeBytes(item.blob.size));
+
+            const url = URL.createObjectURL(item.blob);
+            const img = document.createElement('img');
+            img.src = url;
+            img.addEventListener('load', () => {
+              URL.revokeObjectURL(url);
+
+              const span = document.createElement('span');
+              span.textContent = img.naturalWidth + '×' + img.naturalHeight + ' px';
+              span.style.color = 'gray';
+
+              button.append(' ', span);
             });
 
             itemDiv.append(button);
@@ -476,6 +492,7 @@ window.addEventListener('load', async () => {
               a.click();
             });
 
+            button.append(' ', humanizeBytes(item.blob.size));
             itemDiv.append(button);
           }
         }
@@ -531,6 +548,19 @@ window.addEventListener('load', async () => {
     }
 
     return { title, tags };
+  }
+
+  function humanizeBytes(/** @type {number} */ bytes) {
+    let order = 0;
+    while (bytes > 1000) {
+      order++;
+      bytes /= 1000;
+    }
+
+    const span = document.createElement('span');
+    span.textContent = bytes.toFixed(2) + ' ' + ['B', 'kB', 'MB', 'GB'][order];
+    span.style.color = 'gray';
+    return span;
   }
 
   async function prependItem(/** @type {IDBDatabase} */ database, /** @type {{ title: string; blob?: Blob; tags?: string[]; }} */ item) {
