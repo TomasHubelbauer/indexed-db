@@ -15,6 +15,10 @@ body.file::before {
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
+#dailiesDiv {
+  margin: auto;
+}
+
 #editorInput {
   margin: 0 auto;
   width: 50%;

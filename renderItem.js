@@ -1,8 +1,8 @@
 import extractTags from './extractTags.js';
 import humanizeBytes from './humanizeBytes.js';
 import humanizeMilliseconds from './humanizeMilliseconds.js';
-import patchItem from './patchItem.js';
 import removeItem from './removeItem.js';
+import upsertEntry from './upsertEntry.js';
 
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; }} */ item,
@@ -49,8 +49,8 @@ export default function renderItem(
       return;
     }
 
-    await patchItem(item.id, item => item.order = otherOrder);
-    await patchItem(id, item => item.order = order);
+    await upsertEntry('items', { id: item.id, order: otherOrder });
+    await upsertEntry('items', { id, order });
     await renderItems();
   });
 
@@ -58,7 +58,7 @@ export default function renderItem(
   input.type = 'checkbox';
   input.checked = item.done;
   input.addEventListener('change', async () => {
-    await patchItem(item.id, item => item.done = input.checked);
+    await upsertEntry('items', { id: item.id, done: input.checked });
     await renderItems();
   });
 
@@ -108,10 +108,10 @@ export default function renderItem(
 
     // Preserve title if just modifying tags (`+tag`)
     if (title) {
-      await patchItem(item.id, item => item.title = title);
+      await upsertEntry('items', { id: item.id, title });
     }
 
-    await patchItem(item.id, item => item.tags = tags);
+    await upsertEntry('items', { id: item.id, tags });
     await renderItems();
   });
 

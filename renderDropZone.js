@@ -1,4 +1,4 @@
-import patchItem from './patchItem.js';
+import upsertEntry from './upsertEntry.js';
 
 export default function renderDropZone(/** @type {{ id: number; order: number; title: string; }} */ prev, /** @type {{ id: number; order: number; title: string; }} */ next, renderItems) {
   const div = document.createElement('div');
@@ -23,15 +23,15 @@ export default function renderDropZone(/** @type {{ id: number; order: number; t
       if (next) {
         const prevOrder = prev.order ?? prev.id;
         const nextOrder = next.order ?? next.id;
-        await patchItem(id, item => item.order = (prevOrder + nextOrder) / 2);
+        await upsertEntry('items', { id, order: (prevOrder + nextOrder) / 2 });
       }
       else {
-        await patchItem(id, item => item.order = (prev.order ?? prev.id) + 1);
+        await upsertEntry('items', { id, order: (prev.order ?? prev.id) + 1 });
       }
     }
     else {
       if (next) {
-        await patchItem(id, item => item.order = (next.order ?? next.id) - 1);
+        await upsertEntry('items', { id, order: (next.order ?? next.id) - 1 });
       }
       else {
         throw new Error('Must have either prev or next!');
