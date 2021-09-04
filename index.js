@@ -55,11 +55,13 @@ window.addEventListener('load', async () => {
         mediaRecorder = undefined;
         recordAudioButton.classList.toggle('on-air', false);
         recordVideoButton.classList.toggle('hidden', false);
+        recordScreenButton.classList.toggle('hidden', false);
       });
 
       mediaRecorder.start();
       recordAudioButton.classList.toggle('on-air', true);
       recordVideoButton.classList.toggle('hidden', true);
+      recordScreenButton.classList.toggle('hidden', true);
     });
 
     const recordVideoButton = document.querySelector('#recordVideoButton');
@@ -97,11 +99,53 @@ window.addEventListener('load', async () => {
         video.remove();
         recordVideoButton.classList.toggle('on-air', false);
         recordAudioButton.classList.toggle('hidden', false);
+        recordScreenButton.classList.toggle('hidden', false);
       });
 
       mediaRecorder.start();
       recordVideoButton.classList.toggle('on-air', true);
       recordAudioButton.classList.toggle('hidden', true);
+      recordScreenButton.classList.toggle('hidden', true);
+    });
+
+    const recordScreenButton = document.querySelector('#recordScreenButton');
+    recordScreenButton.addEventListener('click', async () => {
+      if (mediaRecorder) {
+        mediaRecorder.stop();
+        return;
+      }
+
+      const mediaStream = await navigator.mediaDevices.getDisplayMedia();
+      mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
+
+      // Record audio separately: https://bugzilla.mozilla.org/show_bug.cgi?id=1541425
+      const mediaStream2 = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStream.addTrack(mediaStream2.getAudioTracks()[0]);
+
+      /** @type {Blob[]} */
+      const chunks = [];
+
+      mediaRecorder.addEventListener('dataavailable', event => chunks.push(event.data));
+
+      mediaRecorder.addEventListener('stop', async () => {
+        // Stop all tracks to release user media and hide browser media indicators
+        mediaStream.getTracks().forEach(track => track.stop())
+
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+
+        // Note that `||` is used to coerce empty string as well (over `??`)
+        await prependItem(database, { title: input.value || 'Transcribe screen memo', blob });
+        input.value = '';
+        mediaRecorder = undefined;
+        recordScreenButton.classList.toggle('on-air', false);
+        recordAudioButton.classList.toggle('hidden', false);
+        recordVideoButton.classList.toggle('hidden', false);
+      });
+
+      mediaRecorder.start();
+      recordScreenButton.classList.toggle('on-air', true);
+      recordAudioButton.classList.toggle('hidden', true);
+      recordVideoButton.classList.toggle('hidden', true);
     });
 
     await renderItems(database);
