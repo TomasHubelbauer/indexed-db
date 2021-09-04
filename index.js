@@ -281,7 +281,7 @@ window.addEventListener('load', async () => {
 
   function extractTags(/** @type {string} */ title, /** @type {string[]} */ tags = []) {
     title = title.trim();
-    const regex = /(^| )((?<tag>[-+][\w-]+)( |$))+$/;
+    const regex = /(^| )((?<tag>[-+][\w\p{Emoji}-]+)( |$))+$/u;
     const match = regex.exec(title);
     if (match) {
       const modifiers = title.slice(match.index).trim().split(/ /g);
