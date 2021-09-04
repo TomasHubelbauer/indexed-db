@@ -14,7 +14,14 @@ window.addEventListener('load', async () => {
     const database = await openDatabase();
 
     const input = document.querySelector('#editorInput');
-    input.addEventListener('keypress', async event => {
+
+    // Use `keyup` as `keypress` does not get fired for the Escape key
+    input.addEventListener('keyup', async event => {
+      if (event.key === 'Escape') {
+        input.value = '';
+        return;
+      }
+
       if (event.key !== 'Enter' || !input.value) {
         return;
       }
