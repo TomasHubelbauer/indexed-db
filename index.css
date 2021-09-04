@@ -33,6 +33,15 @@ body.file::before {
   margin: .5ex;
 }
 
+#monthliesDiv {
+  margin: auto;
+  text-align: center;
+}
+
+#monthliesDiv button {
+  margin: .5ex;
+}
+
 #editorInput {
   margin: 0 auto;
   width: 50%;
