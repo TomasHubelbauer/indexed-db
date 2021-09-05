@@ -1,8 +1,7 @@
 import createItem from './createItem.js';
 import renderItems from './renderItems.js';
-import renderDailies from './renderDailies.js';
-import renderWeeklies from './renderWeeklies.js';
-import renderMonthlies from './renderMonthlies.js';
+import renderRecurrents from './renderRecurrents.js';
+import calculateWeekNumber from './calculateWeekNumber.js';
 
 window.addEventListener('load', async () => {
   document.body.classList.toggle(location.protocol.slice(0, -1));
@@ -13,9 +12,9 @@ window.addEventListener('load', async () => {
   }
 
   try {
-    await renderDailies();
-    await renderWeeklies();
-    await renderMonthlies();
+    await renderRecurrents('#dailiesDiv', 'dailies', () => new Date().toISOString().slice(0, 10));
+    await renderRecurrents('#weekliesDiv', 'weeklies', calculateWeekNumber);
+    await renderRecurrents('#monthliesDiv', 'monthlies', () => new Date().toLocaleString('default', { month: 'long', year: 'numeric' }));
 
     const input = document.querySelector('#editorInput');
 
