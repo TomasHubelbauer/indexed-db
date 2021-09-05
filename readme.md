@@ -3,16 +3,7 @@
 This is a simple web application demonstrating the use of the IndexedDB web API
 in order to implement a to-do list application.
 
-## Notes
-
-- IndexedDB works on the `file:///` protocol - no need for `localhost` or CORS!
-- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Browser_storage_limits_and_eviction_criteria#where_is_the_data_stored
-  This is where the IndexedDB SQLite databases are stored
-- https://wiki.mozilla.org/Storage
-  This is the closest "official" resources I was able to find that says SQLite
-  is the underlying database of IndexedDB - even if it doesn't fully say it
-
-## Resources
+## Links
 
 - https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
   Shows the basic usage of the IndexedDB API
@@ -27,6 +18,15 @@ in order to implement a to-do list application.
   (https://bugzilla.mozilla.org/show_bug.cgi?id=1325219)
 
 ## Notes
+
+- IndexedDB works on the `file:///` protocol - no need for `localhost` or CORS!
+  Unless using ESM - in which I am. See `privacy.file_unique_origin` further.
+- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Browser_storage_limits_and_eviction_criteria#where_is_the_data_stored
+  This is where the IndexedDB SQLite databases are stored.
+  This folder is backed up by Time Machine, see below how to find it there.
+- https://wiki.mozilla.org/Storage
+  This is the closest "official" resources I was able to find that says SQLite
+  is the underlying database of IndexedDB - even if it doesn't fully say it.
 
 ### `file:` protocol and CORS
 
@@ -92,36 +92,32 @@ not a major issue. It would be nice to figure it out eventually, though, because
 exporting the IndexedDB data by building up an object in the app and offering it
 for download could get unreliable/impossible as the database gets large.
 
+#### Files
+
+Files are stored outside of the SQLite database file in a subdirectory of the
+directory where the database file is stored and the subdirectory has the same
+name as the database file with the `.files` "extension. They are not encrypted
+or encoded in any way, they just lack extensions.
+
+They also get deleted with the record that points to them if that is deleted.
+
+### Time Machine Backup
+
+Time Machine backs up the IndexedDB SQLite database file. You can find it in
+Finder at Time Machine volume (*… (Backup)*) > date and time > Untitled - Data >
+Users. Here right-click on the username folder and select New Terminal at Folder
+and in the Terminal window paste the usual `about:support` profile path, e.g.:
+`Library/Application Support/Firefox/Profiles/….default-release`. Further, go to
+`storage/default/file++++Users+…+Desktop+indexed-db+index.html/idb` and there is
+the backed up copy of the database file.
+
+The local storage data is also backed up here, but IndexedDB makes more sense,
+as it has a much more generous size quota.
+
 ## To-Do
-
-### Verify whether the IndexedDB SQLite file is portable between machines/FFs
-
-I am curious in backing up the SQLite file itself instead of implementing a
-backup functionality in this application. If the file can be taken and moved to
-another machine with Firefox at the same path, or even moved between Firefox and
-Firefox Nightly installations/profiles, that would make it an attractive option.
-
-The reason implementing custom backup and restore logic is cumbersome is because
-not only is it extra, possibly bug-prone, code that one has to implement, but
-also because to implement it, the entire database would have to be read, stored
-in the memory as a blob and then downloaded through `a[download]`. The database
-might not fit into the available memory rendering this functionality broken in
-possibly the least convenient moment for it to be broken.
 
 ### Research how to decode the SQLite file holding the IndexedDB data
 
 Currently it is not viewable by just opening the database in DB Browser for
 SQLite o SQLiteStudio. I have not found anything useful relating to how to open
 this SQLite file in other software than Firefox yet.
-
-### Determine whether the IndexedDB SQLite files are being Time Machine backuped
-
-If they are, I might be able to get away with having Time Machine back them up
-and not even implement import/export in the application.
-
-### Look into how IndexedDB works with `File`s and if they are encrypted, too
-
-If not, export could be implemented by dumping the contents of the IndexedDB
-into a `File` instance and then saving the `File` into the same DB making it
-appear as a standalone file on the disk (presumably that is what the `files`
-directory is for…).
