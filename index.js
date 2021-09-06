@@ -1,7 +1,9 @@
 import createItem from './createItem.js';
 import renderItems from './renderItems.js';
-import renderRecurrents from './renderRecurrents.js';
-import calculateWeekNumber from './calculateWeekNumber.js';
+import renderYesterdaysDailies from './renderYesterdaysDailies.js';
+import renderTodaysDailies from './renderTodaysDailies.js';
+import renderWeeklies from './renderWeeklies.js';
+import renderMonthlies from './renderMonthlies.js';
 
 window.addEventListener('load', async () => {
   document.body.classList.toggle(location.protocol.slice(0, -1));
@@ -12,9 +14,10 @@ window.addEventListener('load', async () => {
   }
 
   try {
-    await renderRecurrents('#dailiesDiv', 'dailies', () => new Date().toISOString().slice(0, 10));
-    await renderRecurrents('#weekliesDiv', 'weeklies', calculateWeekNumber);
-    await renderRecurrents('#monthliesDiv', 'monthlies', () => new Date().toLocaleString('default', { month: 'long', year: 'numeric' }));
+    await renderYesterdaysDailies();
+    await renderTodaysDailies();
+    await renderWeeklies();
+    await renderMonthlies();
 
     const input = document.querySelector('#editorInput');
 
@@ -35,8 +38,15 @@ window.addEventListener('load', async () => {
     });
 
     // Keep the input focused
-    document.addEventListener('visibilitychange', () => input.focus());
     input.focus();
+    document.addEventListener('visibilitychange', async () => {
+      input.focus();
+      await renderYesterdaysDailies();
+      await renderTodaysDailies();
+      await renderWeeklies();
+      await renderMonthlies();
+      await renderItems();
+    });
 
     let mediaRecorder;
     let stamp;

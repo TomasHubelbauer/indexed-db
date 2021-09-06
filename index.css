@@ -15,30 +15,12 @@ body.file::before {
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-#dailiesDiv {
+.recurrentsDiv {
   margin: auto;
   text-align: center;
 }
 
-#dailiesDiv button {
-  margin: .5ex;
-}
-
-#weekliesDiv {
-  margin: auto;
-  text-align: center;
-}
-
-#weekliesDiv button {
-  margin: .5ex;
-}
-
-#monthliesDiv {
-  margin: auto;
-  text-align: center;
-}
-
-#monthliesDiv button {
+.recurrentsDiv button {
   margin: .5ex;
 }
 
