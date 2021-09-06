@@ -3,6 +3,7 @@ import humanizeBytes from './humanizeBytes.js';
 import humanizeMilliseconds from './humanizeMilliseconds.js';
 import removeItem from './removeItem.js';
 import upsertEntry from './upsertEntry.js';
+import parseLinks from './parseLinks.js';
 
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; detail?: string; }} */ item,
@@ -87,28 +88,7 @@ export default function renderItem(
 
   const span = document.createElement('span');
   span.className = 'titleSpan';
-
-  const regex = /https?:\/\/([\w-]+.)[\w-]+.[\w-]+(\/[\w-]+)+([\?\#][\w-]+)?/g;
-  let match;
-  let index = 0;
-  while (match = regex.exec(item.title)) {
-    span.append(item.title.slice(index, match.index));
-
-    const a = document.createElement('a');
-    a.textContent = match[0].replace(/https?:\/\/(www.)?/, ''); // Strip https?:// and www.
-    a.href = match[0];
-    a.target = '_blank';
-    span.append(a);
-
-    // Stop the click action from triggering the rename operation
-    a.addEventListener('click', event => event.stopPropagation());
-
-    index = match.index + match[0].length;
-  }
-
-  if (index < item.title.length) {
-    span.append(item.title.slice(index));
-  }
+  span.append(...parseLinks(item.title));
 
   span.addEventListener('click', async () => {
     const str = prompt('Title:', item.title);

@@ -1,7 +1,7 @@
 import pageItems from './pageItems.js';
 import renderDropZone from './renderDropZone.js';
 import renderItem from './renderItem.js';
-
+import parseLinks from './parseLinks.js';
 
 export default async function renderItems() {
   const filters = localStorage.filters ? JSON.parse(localStorage.filters) : {};
@@ -69,7 +69,7 @@ export default async function renderItems() {
     if (item.detail) {
       const div = document.createElement('div');
       div.className = 'detailDiv';
-      div.textContent = item.detail;
+      div.append(...parseLinks(item.detail));
       itemsDiv.append(div);
     }
 
