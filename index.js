@@ -1,7 +1,7 @@
 import createItem from './createItem.js';
 import renderItems from './renderItems.js';
-import renderYesterdaysDailies from './renderYesterdaysDailies.js';
 import renderTodaysDailies from './renderTodaysDailies.js';
+import renderYesterdaysDailies from './renderYesterdaysDailies.js';
 import renderWeeklies from './renderWeeklies.js';
 import renderMonthlies from './renderMonthlies.js';
 
@@ -14,8 +14,8 @@ window.addEventListener('load', async () => {
   }
 
   try {
-    await renderYesterdaysDailies();
     await renderTodaysDailies();
+    await renderYesterdaysDailies();
     await renderWeeklies();
     await renderMonthlies();
 
