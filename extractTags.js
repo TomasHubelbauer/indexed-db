@@ -1,6 +1,6 @@
 export default function extractTags(/** @type {string} */ title, /** @type {string[]} */ tags = []) {
   title = title.trim();
-  const regex = /(^| )((?<tag>[-+][\w\p{Emoji}-]+)( |$))+$/u;
+  const regex = /(^| )((?<tag>[-+][\w(\p{Emoji}\p{Emoji_Component}?)-]+)( |$))+$/u;
   const match = regex.exec(title);
   if (match) {
     const modifiers = title.slice(match.index).trim().split(/ /g);
