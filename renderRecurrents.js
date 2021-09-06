@@ -26,7 +26,7 @@ export default async function renderRecurrents(
     button.title = recurrent.title;
     button.addEventListener('click', async () => {
       await upsertEntry(store, { id: recurrent.id, [key]: true });
-      await renderRecurrents(selector, store, keyer);
+      await renderRecurrents(selector, store, keyer, formatter);
     });
 
     div.append(button);
@@ -46,7 +46,7 @@ export default async function renderRecurrents(
     }
 
     await upsertEntry(store, { icon, title });
-    await renderRecurrents(selector, store, keyer);
+    await renderRecurrents(selector, store, keyer, formatter);
   });
 
   div.append(button);
