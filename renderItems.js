@@ -64,6 +64,13 @@ export default async function renderItems() {
   for (const item of filteredItems) {
     itemsDiv.append(renderDropZone(_item, item));
     itemsDiv.append(renderItem(item, onDragStart, onDragEnd, renderItems));
+    if (item.detail) {
+      const div = document.createElement('div');
+      div.className = 'detailDiv';
+      div.textContent = item.detail;
+      itemsDiv.append(div);
+    }
+
     _item = item;
   }
 

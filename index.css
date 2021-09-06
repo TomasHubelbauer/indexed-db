@@ -104,6 +104,10 @@ body.file::before {
   visibility: initial;
 }
 
+.detailDiv {
+  margin: 0 0 1ex 2.5em;
+}
+
 button {
   background: none;
   border: none;

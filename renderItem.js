@@ -5,7 +5,7 @@ import removeItem from './removeItem.js';
 import upsertEntry from './upsertEntry.js';
 
 export default function renderItem(
-  /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; }} */ item,
+  /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; detail?: string; }} */ item,
   onDragStart,
   onDragEnd,
   renderItems
@@ -15,6 +15,18 @@ export default function renderItem(
   itemDiv.draggable = true;
   itemDiv.dataset.id = item.id;
   itemDiv.dataset.order = item.order ?? item.id;
+
+  itemDiv.addEventListener('contextmenu', async event => {
+    event.preventDefault();
+
+    const detail = prompt('Detail:', item.detail);
+    if (!detail) {
+      return;
+    }
+
+    await upsertEntry('items', { id: item.id, detail });
+    await renderItems();
+  });
 
   itemDiv.addEventListener('dragstart', event => {
     // Copy the ID in as text so that dragging it to an input shows its ID
