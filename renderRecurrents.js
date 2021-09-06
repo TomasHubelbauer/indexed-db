@@ -1,13 +1,18 @@
 import listStore from './listStore.js';
 import upsertEntry from './upsertEntry.js';
 
-export default async function renderRecurrents(/** @type {string} */ selector, /** @type {string} */ store, /** @type {() => string} */ keyer) {
+export default async function renderRecurrents(
+  /** @type {string} */ selector,
+  /** @type {string} */ store,
+  /** @type {() => string} */ keyer,
+  /** @type {(string) => void} */ formatter
+) {
   const div = document.querySelector(selector);
   div.innerHTML = '';
 
   const key = keyer();
   const titleDiv = document.createElement('div');
-  titleDiv.textContent = key;
+  titleDiv.textContent = formatter?.(key) ?? key;
   div.append(titleDiv);
 
   const recurrents = await listStore(store);
