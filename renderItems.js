@@ -2,10 +2,11 @@ import pageItems from './pageItems.js';
 import renderDropZone from './renderDropZone.js';
 import renderItem from './renderItem.js';
 
-const filters = {};
-let done = false;
 
 export default async function renderItems() {
+  const filters = localStorage.filters ? JSON.parse(localStorage.filters) : {};
+  const done = localStorage.done !== undefined ? JSON.parse(localStorage.done) : false;
+
   const items = await pageItems();
 
   const tagsDiv = document.querySelector('#tagsDiv');
@@ -19,6 +20,7 @@ export default async function renderItems() {
 
     input.addEventListener('change', async () => {
       filters[tag] = input.checked;
+      localStorage.filters = JSON.stringify(filters);
       await renderItems();
     });
 
@@ -35,7 +37,7 @@ export default async function renderItems() {
   input.checked = done;
 
   input.addEventListener('change', async () => {
-    done = input.checked;
+    localStorage.done = JSON.stringify(input.checked);
     await renderItems();
   });
 
