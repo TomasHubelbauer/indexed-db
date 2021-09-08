@@ -9,7 +9,10 @@ export default function extractTags(/** @type {string} */ title, /** @type {stri
       const tag = modifier.slice('±'.length);
       switch (modifier[0]) {
         case '+': {
-          tags.push(tag);
+          if (!tags.includes(tag)) {
+            tags.push(tag);
+          }
+
           break;
         }
         case '-': {
