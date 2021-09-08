@@ -7,7 +7,12 @@ export default function* parseLinks(/** @type {string} */ text) {
 
     const a = document.createElement('a');
     a.textContent = match[0].replace(/https?:\/\/(www.)?/, ''); // Strip https?:// and www.
+    if (a.textContent.length > 50) {
+      a.textContent = a.textContent.slice(0, 50) + '…';
+    }
+
     a.href = match[0];
+    a.title = match[0];
     a.target = '_blank';
     yield a;
 
