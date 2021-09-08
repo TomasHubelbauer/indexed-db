@@ -4,6 +4,7 @@ import humanizeMilliseconds from './humanizeMilliseconds.js';
 import removeItem from './removeItem.js';
 import upsertEntry from './upsertEntry.js';
 import parseLinks from './parseLinks.js';
+import presentSingleLineModal from './presentSingleLineModal.js';
 
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; detail?: string; }} */ item,
@@ -20,7 +21,8 @@ export default function renderItem(
   itemDiv.addEventListener('contextmenu', async event => {
     event.preventDefault();
 
-    const detail = prompt('Detail:', item.detail);
+    // TODO: Make and use presentMultipleLinesModal here
+    const detail = await presentSingleLineModal('Detail:', item.detail);
     if (!detail) {
       return;
     }
@@ -91,7 +93,7 @@ export default function renderItem(
   span.append(...parseLinks(item.title));
 
   span.addEventListener('click', async () => {
-    const str = prompt('Title:', item.title);
+    const str = await presentSingleLineModal('Title:', item.title);
     if (!str) {
       return;
     }

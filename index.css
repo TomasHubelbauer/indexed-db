@@ -5,6 +5,10 @@ body {
   gap: 1em;
 }
 
+body.modal {
+  overflow: hidden;
+}
+
 body.file::before {
   background: salmon;
   color: white;
@@ -57,7 +61,7 @@ body.file::before {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 #tagsDiv {
@@ -130,4 +134,22 @@ button {
 /* Note that :hover cannot be used because it does not fire on drag-hover */
 .dropDiv.hover {
   background: salmon;
+}
+
+#modalDiv {
+  align-items: center;
+  background: rgba(255, 255, 255, .95);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+#modalTitleDiv {
+  margin: 0 0 .5em;
 }

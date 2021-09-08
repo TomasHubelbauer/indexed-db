@@ -1,5 +1,6 @@
 import listStore from './listStore.js';
 import upsertEntry from './upsertEntry.js';
+import presentSingleLineModal from './presentSingleLineModal.js';
 
 export default async function renderRecurrents(
   /** @type {string} */ selector,
@@ -35,12 +36,12 @@ export default async function renderRecurrents(
   const button = document.createElement('button');
   button.textContent = '➕';
   button.addEventListener('click', async () => {
-    const icon = prompt('Icon:');
+    const icon = await presentSingleLineModal('Icon:');
     if (!icon) {
       return;
     }
 
-    const title = prompt('Title:');
+    const title = await presentSingleLineModal('Title:');
     if (!title) {
       return;
     }
