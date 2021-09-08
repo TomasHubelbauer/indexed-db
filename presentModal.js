@@ -18,5 +18,8 @@ export default function presentModal(/** @type {string} */ title, content) {
 
   modalContentDiv.append(content);
 
+  // Prevent modal from closing from mouse interactions within its content
+  modalContentDiv.addEventListener('click', event => event.stopPropagation());
+
   return dismissModal;
 }
