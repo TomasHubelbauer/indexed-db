@@ -40,7 +40,7 @@ window.addEventListener('load', async () => {
     // Keep the input focused
     input.focus();
     document.addEventListener('visibilitychange', async () => {
-      input.focus();
+      input.focus({ preventScroll: true });
       await renderYesterdaysDailies();
       await renderTodaysDailies();
       await renderWeeklies();
