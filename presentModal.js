@@ -9,8 +9,10 @@ export default function presentModal(/** @type {string} */ title, content) {
     modalDiv.classList.toggle('hidden', true);
     modalTitleDiv.textContent = '';
     modalContentDiv.innerHTML = '';
+    document.body.classList.toggle('modal', false);
   }
 
+  modalDiv.style.top = window.scrollY + 'px';
   modalDiv.classList.toggle('hidden', false);
   modalDiv.addEventListener('click', dismissModal);
 
