@@ -13,6 +13,7 @@ export default function* parseLinks(/** @type {string} */ text) {
 
     // Stop the link from triggering click handlers on parent elements
     a.addEventListener('click', event => event.stopPropagation());
+    a.addEventListener('contextmenu', event => event.stopPropagation());
 
     index = match.index + match[0].length;
   }
