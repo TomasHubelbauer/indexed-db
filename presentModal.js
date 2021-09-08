@@ -1,4 +1,4 @@
-export default function presentModal(/** @type {string} */ title, content) {
+export default function presentModal(/** @type {string} */ title, ...content) {
   document.body.classList.toggle('modal', true);
 
   const modalDiv = document.querySelector('#modalDiv');
@@ -18,7 +18,7 @@ export default function presentModal(/** @type {string} */ title, content) {
 
   modalTitleDiv.textContent = title;
 
-  modalContentDiv.append(content);
+  modalContentDiv.append(...content);
 
   // Prevent modal from closing from mouse interactions within its content
   modalContentDiv.addEventListener('click', event => event.stopPropagation());

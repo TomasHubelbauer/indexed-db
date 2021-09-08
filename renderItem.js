@@ -5,6 +5,7 @@ import removeItem from './removeItem.js';
 import upsertEntry from './upsertEntry.js';
 import parseLinks from './parseLinks.js';
 import presentSingleLineModal from './presentSingleLineModal.js';
+import presentMultipleLinesModal from './preventMultipleLinesModal.js';
 
 export default function renderItem(
   /** @type {{ id: number; title: string; order?: number; done?: boolean; tags?: string[]; blob?: Blob | File; duration?: number; detail?: string; }} */ item,
@@ -18,11 +19,11 @@ export default function renderItem(
   itemDiv.dataset.id = item.id;
   itemDiv.dataset.order = item.order ?? item.id;
 
+  // TODO: Do this on the detail block click instead
   itemDiv.addEventListener('contextmenu', async event => {
     event.preventDefault();
 
-    // TODO: Make and use presentMultipleLinesModal here
-    const detail = await presentSingleLineModal('Detail:', item.detail);
+    const detail = await presentMultipleLinesModal('Detail:', item.detail);
     if (!detail) {
       return;
     }
