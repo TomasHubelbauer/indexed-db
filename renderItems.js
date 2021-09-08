@@ -67,10 +67,13 @@ export default async function renderItems() {
     itemsDiv.append(renderDropZone(_item, item));
     itemsDiv.append(renderItem(item, onDragStart, onDragEnd, renderItems));
     if (item.detail) {
-      const div = document.createElement('div');
-      div.className = 'detailDiv';
-      div.append(...parseLinks(item.detail));
-      itemsDiv.append(div);
+      const lines = item.detail.split('\n');
+      for (const line of lines) {
+        const div = document.createElement('div');
+        div.className = 'detailDiv';
+        div.append(...parseLinks(line));
+        itemsDiv.append(div);
+      }
     }
 
     _item = item;
