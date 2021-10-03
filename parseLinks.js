@@ -1,5 +1,5 @@
 export default function* parseLinks(/** @type {string} */ text) {
-  const regex = /https?:\/\/([\w-]+.)[\w-]+.[\w-]+(\/[\w-]+)+([\?\#][\w-]+)?/g;
+  const regex = /https?:\/\/([\w-:]+.)[\w-:]+.[\w-:]+(\/[\w-:]+)+([\?\#][\w-:]+)?/g;
   let match;
   let index = 0;
   while (match = regex.exec(text)) {
